@@ -1,0 +1,12 @@
+[package]
+name = "lex"
+version = "0.0.0"
+description = "This library aids in lexing programming languages."
+readme = "README.md"
+repository = "https://github.com/nikdeapen/lex"
+homepage = "https://github.com/nikdeapen/lex"
+authors = ["Nik Deapen <nik@deapen.com>"]
+edition = "2021"
+license = "MIT"
+
+[dependencies]
