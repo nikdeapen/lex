@@ -74,8 +74,8 @@ impl Lexer {
 
     /// Gets the prefix of {b} that matches {f}.
     pub fn prefix_len<F>(b: &[u8], f: F) -> usize
-        where
-            F: Fn(u8) -> bool,
+    where
+        F: Fn(u8) -> bool,
     {
         b.iter().position(|c| !f(*c)).unwrap_or(b.len())
     }
