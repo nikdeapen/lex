@@ -37,7 +37,7 @@ impl<'a> Token<'a> {
     }
 
     /// Gets the value.
-    pub fn value(&self) -> &str {
+    pub fn value(&self) -> &'a str {
         self.value
     }
 }
