@@ -2,6 +2,7 @@ pub use parse_context::*;
 
 mod parse_context;
 
+mod char;
 mod comments;
 mod error;
 mod exact;
