@@ -20,13 +20,13 @@ impl<'a> ParseContext<'a> {
     //! Token Properties
 
     /// Gets the token.
-    pub fn token(&self) -> Token<'a> {
+    pub fn token(self) -> Token<'a> {
         self.token
     }
 
     /// Gets the token value.
-    pub fn value(&self) -> &'a str {
-        self.token.value()
+    pub fn value(self) -> &'a str {
+        self.token().value()
     }
 
     /// Gets the length of the token.
