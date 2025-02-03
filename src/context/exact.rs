@@ -16,7 +16,7 @@ impl<'a> ParseContext<'a> {
             {
                 (None, *self)
             } else {
-                let (left, right) = unsafe { self.split_unchecked(s.len()) };
+                let (left, right) = unsafe { self.split(s.len()) };
                 (Some(left.token()), right)
             }
         } else {

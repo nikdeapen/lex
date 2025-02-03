@@ -28,7 +28,7 @@ impl<'a> Token<'a> {
     ///
     /// # Unsafe,
     /// The `index` must be a valid split index.
-    pub unsafe fn split_unchecked(&self, index: usize) -> (Self, Self) {
+    pub unsafe fn split(&self, index: usize) -> (Self, Self) {
         debug_assert!(self.is_valid_split_index(index));
 
         let (left, right) = self.value().split_at(index);
@@ -53,13 +53,13 @@ impl<'a> Token<'a> {
     ///
     /// # Unsafe,
     /// The `index` must be a valid split index.
-    pub unsafe fn split_optional_unchecked(&self, index: usize) -> (Option<Self>, Self) {
+    pub unsafe fn split_optional(&self, index: usize) -> (Option<Self>, Self) {
         debug_assert!(self.is_valid_split_index(index));
 
         if index == 0 {
             (None, *self)
         } else {
-            let (left, right) = self.split_unchecked(index);
+            let (left, right) = self.split(index);
             (Some(left), right)
         }
     }
@@ -105,7 +105,7 @@ mod tests {
             ("0\r1\n2\r\n123", 10, "0\r1\n2\r\n123", Token::new("", 3, 3)),
         ];
         for (input, index, expected_left, expected_right) in test_cases {
-            let (left, right) = unsafe { Token::from(*input).split_unchecked(*index) };
+            let (left, right) = unsafe { Token::from(*input).split(*index) };
             assert_eq!(left.value(), *expected_left);
             assert_eq!(right, *expected_right);
         }

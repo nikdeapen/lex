@@ -23,7 +23,7 @@ impl CommentConfig {
     ///
     /// # Unsafe
     /// The `line_comment_delimiter` must be valid.
-    pub unsafe fn set_line_comment_delimiter_unchecked<S>(&mut self, line_comment_delimiter: S)
+    pub unsafe fn set_line_comment_delimiter<S>(&mut self, line_comment_delimiter: S)
     where
         S: Into<String>,
     {
@@ -40,14 +40,11 @@ impl CommentConfig {
     ///
     /// # Unsafe
     /// The `line_comment_delimiter` must be valid.
-    pub unsafe fn with_line_comment_delimiter_unchecked<S>(
-        mut self,
-        line_comment_delimiter: S,
-    ) -> Self
+    pub unsafe fn with_line_comment_delimiter<S>(mut self, line_comment_delimiter: S) -> Self
     where
         S: Into<String>,
     {
-        self.set_line_comment_delimiter_unchecked(line_comment_delimiter);
+        self.set_line_comment_delimiter(line_comment_delimiter);
         self
     }
 }

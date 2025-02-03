@@ -39,9 +39,9 @@ impl<'a> ParseContext<'a> {
                 return;
             }
 
-            let last_line: Token = unsafe { last_line.split_unchecked(len) }.1.token();
+            let last_line: Token = unsafe { last_line.split(len) }.1.token();
             if last_line.value().starts_with(line_comment_delimiter) {
-                add_fn(unsafe { last_line.split_unchecked(line_comment_delimiter.len()) }.1);
+                add_fn(unsafe { last_line.split(line_comment_delimiter.len()) }.1);
             }
         }
     }
@@ -54,9 +54,9 @@ impl<'a> ParseContext<'a> {
             .iter()
             .rposition(|c| *c == b'\r' || *c == b'\n')
         {
-            unsafe { self.split_unchecked(last_cr_or_lf + 1) }
+            unsafe { self.split(last_cr_or_lf + 1) }
         } else {
-            unsafe { self.split_unchecked(0) }
+            unsafe { self.split(0) }
         }
     }
 
@@ -88,7 +88,7 @@ impl<'a> ParseContext<'a> {
                 0
             }
         };
-        unsafe { self.split_unchecked(self.len() - last_line_ending_len) }.0
+        unsafe { self.split(self.len() - last_line_ending_len) }.0
     }
 }
 
@@ -110,9 +110,8 @@ mod tests {
         .join("\n");
 
         let config: Config = unsafe {
-            Config::default().with_comment_config(
-                CommentConfig::default().with_line_comment_delimiter_unchecked("//"),
-            )
+            Config::default()
+                .with_comment_config(CommentConfig::default().with_line_comment_delimiter("//"))
         };
         let context: ParseContext = ParseContext::new(Token::from(text.as_str()), &config);
 

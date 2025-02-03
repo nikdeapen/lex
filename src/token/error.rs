@@ -18,7 +18,7 @@ impl<'a> Token<'a> {
         {
             symbol
         } else if let Some(first) = self.value().chars().next() {
-            let (first_char, _after) = unsafe { self.split_unchecked(first.len_utf8()) };
+            let (first_char, _after) = unsafe { self.split(first.len_utf8()) };
             first_char
         } else {
             self

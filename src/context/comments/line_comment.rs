@@ -13,7 +13,7 @@ impl<'a> ParseContext<'a> {
         {
             if self.value().starts_with(line_comment_delimiter) {
                 let (delimiter, after_delimiter) =
-                    unsafe { self.split_unchecked(line_comment_delimiter.len()) };
+                    unsafe { self.split(line_comment_delimiter.len()) };
                 let (comment_line, line_ending, after_line_ending) = after_delimiter.rest_of_line();
                 return (
                     Some((delimiter, comment_line, line_ending)),
@@ -42,9 +42,8 @@ mod tests {
         ];
 
         let config: Config = unsafe {
-            Config::default().with_comment_config(
-                CommentConfig::default().with_line_comment_delimiter_unchecked("//"),
-            )
+            Config::default()
+                .with_comment_config(CommentConfig::default().with_line_comment_delimiter("//"))
         };
         for (input, expected, after_expected) in test_cases {
             let c: ParseContext = ParseContext::new(Token::from(*input), &config);

@@ -9,7 +9,7 @@ impl<'a> ParseContext<'a> {
     /// Returns `(None, self)` when there is no line-ending.
     pub fn line_ending(&self) -> (Option<Self>, Self) {
         let line_ending_len: usize = Token::line_ending_prefix_len(self.value());
-        unsafe { self.split_optional_unchecked(line_ending_len) }
+        unsafe { self.split_optional(line_ending_len) }
     }
 }
 

@@ -9,9 +9,7 @@ impl<'a> ParseContext<'a> {
     /// Returns `(None, self)` when there is no line-ending.
     pub fn white_lines(&self) -> (Option<Self>, Self) {
         unsafe {
-            self.match_prefix_optional_unchecked(|c| {
-                c == b' ' || c == b'\t' || c == b'\r' || c == b'\n'
-            })
+            self.match_prefix_optional(|c| c == b' ' || c == b'\t' || c == b'\r' || c == b'\n')
         }
     }
 }

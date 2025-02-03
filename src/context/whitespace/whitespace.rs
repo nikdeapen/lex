@@ -8,7 +8,7 @@ impl<'a> ParseContext<'a> {
     /// Returns `(Some(whitespace), after_whitespace)`.
     /// Returns `(None, self)` when there is no whitespace.
     pub fn whitespace(&self) -> (Option<Self>, Self) {
-        unsafe { self.match_prefix_optional_unchecked(|c| c == b' ' || c == b'\t') }
+        unsafe { self.match_prefix_optional(|c| c == b' ' || c == b'\t') }
     }
 }
 

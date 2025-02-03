@@ -30,7 +30,7 @@ impl<'a> ParseContext<'a> {
             }
 
             if !matched {
-                return unsafe { self.split_optional_unchecked(len) };
+                return unsafe { self.split_optional(len) };
             }
         }
     }
@@ -51,9 +51,8 @@ mod tests {
         ];
 
         let config: Config = unsafe {
-            Config::default().with_comment_config(
-                CommentConfig::default().with_line_comment_delimiter_unchecked("//"),
-            )
+            Config::default()
+                .with_comment_config(CommentConfig::default().with_line_comment_delimiter("//"))
         };
         for (input, expected, after_expected) in test_cases {
             let c: ParseContext = ParseContext::new(Token::from(*input), &config);

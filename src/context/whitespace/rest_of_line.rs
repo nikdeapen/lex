@@ -14,7 +14,7 @@ impl<'a> ParseContext<'a> {
             .iter()
             .position(|c| *c == b'\r' || *c == b'\n')
             .unwrap_or(self.len());
-        let (rest_of_line, after_rest_of_line) = unsafe { self.split_unchecked(cr_lf_or_end) };
+        let (rest_of_line, after_rest_of_line) = unsafe { self.split(cr_lf_or_end) };
         let (line_ending, after_line_ending) = after_rest_of_line.line_ending();
         (rest_of_line, line_ending, after_line_ending)
     }

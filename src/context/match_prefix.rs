@@ -23,11 +23,11 @@ impl<'a> ParseContext<'a> {
     /// # Unsafe
     /// The `prefix_fn` must result in a valid split index. This can be ensured if the `prefix_fn`
     /// matches only US-ASCII chars and not line-endings.
-    pub unsafe fn match_prefix_optional_unchecked<F>(&self, prefix_fn: F) -> (Option<Self>, Self)
+    pub unsafe fn match_prefix_optional<F>(&self, prefix_fn: F) -> (Option<Self>, Self)
     where
         F: Fn(u8) -> bool,
     {
-        self.split_optional_unchecked(self.match_prefix_len(prefix_fn))
+        self.split_optional(self.match_prefix_len(prefix_fn))
     }
 
     /// Parses the number of bytes from the prefix that match `prefix_fn`.
@@ -38,10 +38,10 @@ impl<'a> ParseContext<'a> {
     /// # Unsafe
     /// The `prefix_fn` must result in a valid split index. This can be ensured if the `prefix_fn`
     /// matches only US-ASCII chars and not line-endings
-    pub unsafe fn match_prefix_unchecked<F>(&self, prefix_fn: F) -> (Self, Self)
+    pub unsafe fn match_prefix<F>(&self, prefix_fn: F) -> (Self, Self)
     where
         F: Fn(u8) -> bool,
     {
-        self.split_unchecked(self.match_prefix_len(prefix_fn))
+        self.split(self.match_prefix_len(prefix_fn))
     }
 }
