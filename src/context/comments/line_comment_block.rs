@@ -3,19 +3,29 @@ use crate::{ParseContext, Token};
 impl<'a> ParseContext<'a> {
     //! Line Comment Block
 
+    /// Parses an optionally empty line-comment block.
+    pub fn line_comment_block(&self) -> (Vec<Token<'a>>, Self) {
+        let (comments, after_comments) = self.white_line_comments();
+        if let Some(comments) = comments {
+            (comments.line_comment_block_vec(), after_comments)
+        } else {
+            (vec![], after_comments)
+        }
+    }
+
     /// Parses the line-comment block vec.
     ///
     /// Returns the line-comments as a vec of `(delimiter, line_text)`.
-    pub fn line_comment_block_vec(self) -> Vec<Token<'a>> {
+    fn line_comment_block_vec(self) -> Vec<Token<'a>> {
         let mut result: Vec<Token> = Vec::default();
-        self.line_comment_block(|comment| result.push(comment.clone()));
+        self.construct_line_comment_block(|comment| result.push(comment.clone()));
         result
     }
 
     /// Parses a line-comment block.
     ///
     /// Adds the line-comments as `(delimiter, line_text)`.
-    pub fn line_comment_block<F>(self, mut add_fn: F)
+    fn construct_line_comment_block<F>(self, mut add_fn: F)
     where
         F: FnMut(Token<'a>),
     {
