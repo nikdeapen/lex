@@ -1,5 +1,7 @@
 pub use token::*;
 
-mod split;
 mod token;
+
+mod error;
+mod split;
 mod whitespace;

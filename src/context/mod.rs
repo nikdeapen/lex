@@ -1,5 +1,6 @@
 pub use parse_context::*;
 
+mod error;
 mod parse_context;
 
 mod comments;
