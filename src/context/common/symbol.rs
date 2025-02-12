@@ -9,7 +9,7 @@ impl<'a> ParseContext<'a> {
     /// Returns `(None, self)` if there is no symbol.
     pub fn symbol(&self) -> (Option<Token<'a>>, Self) {
         if let (Some(symbol), after_symbol) =
-            unsafe { self.match_prefix_optional(|c| c.is_ascii_alphanumeric() || c == b'_') }
+            unsafe { self.match_prefix(|c| c.is_ascii_alphanumeric() || c == b'_') }
         {
             (Some(symbol.token()), after_symbol)
         } else {
