@@ -41,7 +41,7 @@ impl<'a> Token<'a> {
         self.line
     }
 
-    /// Gets the 0-indexed position of the first byte within the line.
+    /// Gets the 0-indexed byte position of the first byte within the line.
     pub fn position(&self) -> usize {
         self.position
     }
@@ -50,7 +50,7 @@ impl<'a> Token<'a> {
 impl<'a> Token<'a> {
     //! Derived Properties
 
-    /// Gets the length of the string value.
+    /// Gets the length of the string value. (in bytes)
     pub fn len(&self) -> usize {
         self.value.len()
     }

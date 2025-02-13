@@ -29,7 +29,7 @@ impl<'a> ParseContext<'a> {
         self.token().value()
     }
 
-    /// Gets the length of the token.
+    /// Gets the length of the token. (in bytes)
     pub fn len(&self) -> usize {
         self.token.len()
     }

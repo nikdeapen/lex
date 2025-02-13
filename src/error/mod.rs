@@ -1,5 +1,5 @@
 pub use error::*;
-pub use result::*;
+pub use lex_result::*;
 
 mod error;
-mod result;
+mod lex_result;

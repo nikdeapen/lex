@@ -29,12 +29,12 @@ impl<'a> ParseContext<'a> {
     where
         F: FnMut(Token<'a>),
     {
-        let line_comment_delimiter: &str =
-            if let Some(lcd) = self.config().comment_config().line_comment_delimiter() {
-                lcd
-            } else {
-                return;
-            };
+        let line_comment_delimiter: &str = if let Some(lcd) = self.config().line_comment_delimiter()
+        {
+            lcd
+        } else {
+            return;
+        };
 
         let (mut lines, last_line) = self.split_last_line();
         let last_line_indent: usize = last_line.indent_level_and_len().0;
@@ -104,7 +104,7 @@ impl<'a> ParseContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{CommentConfig, Config, ParseContext, Token};
+    use crate::{Config, ParseContext, Token};
 
     #[test]
     fn line_comment_block() {
@@ -119,10 +119,7 @@ mod tests {
         ]
         .join("\n");
 
-        let config: Config = unsafe {
-            Config::default()
-                .with_comment_config(CommentConfig::default().with_line_comment_delimiter("//"))
-        };
+        let config: Config = unsafe { Config::default().with_line_comment_delimiter("//") };
         let context: ParseContext = ParseContext::new(Token::from(text.as_str()), &config);
 
         let comments: Vec<Token> = context.line_comment_block_vec();

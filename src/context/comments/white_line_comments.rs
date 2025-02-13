@@ -38,7 +38,7 @@ impl<'a> ParseContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{CommentConfig, Config, ParseContext, Token};
+    use crate::{Config, ParseContext, Token};
 
     #[test]
     fn white_line_comments() {
@@ -50,10 +50,7 @@ mod tests {
             (" \r\n //x\r\nx", " \r\n //x\r\n", "x"),
         ];
 
-        let config: Config = unsafe {
-            Config::default()
-                .with_comment_config(CommentConfig::default().with_line_comment_delimiter("//"))
-        };
+        let config: Config = unsafe { Config::default().with_line_comment_delimiter("//") };
         for (input, expected, after_expected) in test_cases {
             let c: ParseContext = ParseContext::new(Token::from(*input), &config);
             let (result, after_result) = c.white_line_comments();

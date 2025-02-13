@@ -12,7 +12,7 @@ pub struct Error<'a, E: Debug> {
 impl<'a, E: Debug> Error<'a, E> {
     //! Construction
 
-    /// Creates a new parse error.
+    /// Creates a new parsing error.
     pub fn new(token: Token<'a>, error: E) -> Self {
         Self { token, error }
     }
@@ -40,7 +40,7 @@ impl<'a, E: Debug> Error<'a, E> {
 impl<'a, E: Debug> Error<'a, E> {
     //! Map
 
-    /// Maps the error.
+    /// Maps the typed error.
     pub fn map<F, E2>(self, map_fn: F) -> Error<'a, E2>
     where
         F: Fn(E) -> E2,

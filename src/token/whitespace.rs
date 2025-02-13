@@ -3,7 +3,7 @@ use crate::Token;
 impl<'a> Token<'a> {
     //! Line Endings
 
-    /// Gets the line-ending prefix length.
+    /// Gets the length of the line-ending from the prefix of `s`.
     ///
     /// Returns `2` if `s` starts with `CRLF`.
     /// Returns `1` if `s` starts with `CR` and not `CRLF`.

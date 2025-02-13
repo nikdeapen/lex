@@ -4,7 +4,7 @@ impl<'a> ParseContext<'a> {
     // Indent Level
 
     /// Gets the indent level and the indent length.
-    pub fn indent_level_and_len(&self) -> (usize, usize) {
+    pub(crate) fn indent_level_and_len(&self) -> (usize, usize) {
         let mut indent_level: usize = 0;
         let mut len: usize = 0;
 

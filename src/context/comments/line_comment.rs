@@ -8,9 +8,7 @@ impl<'a> ParseContext<'a> {
     /// Returns `(Some(delimiter, comment_line, line_ending), after_line_ending)`.
     /// Returns `(None, self)` if there is no line-comment.
     pub fn line_comment(&self) -> (Option<(Self, Self, Option<Self>)>, Self) {
-        if let Some(line_comment_delimiter) =
-            self.config().comment_config().line_comment_delimiter()
-        {
+        if let Some(line_comment_delimiter) = self.config().line_comment_delimiter() {
             if self.value().starts_with(line_comment_delimiter) {
                 let (delimiter, after_delimiter) =
                     unsafe { self.split(line_comment_delimiter.len()) };
@@ -27,7 +25,7 @@ impl<'a> ParseContext<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{CommentConfig, Config, ParseContext, Token};
+    use crate::{Config, ParseContext, Token};
 
     #[test]
     fn line_comment() {
@@ -41,10 +39,7 @@ mod tests {
             ("//c\r\nafter", Some(("//", "c", Some("\r\n"))), "after"),
         ];
 
-        let config: Config = unsafe {
-            Config::default()
-                .with_comment_config(CommentConfig::default().with_line_comment_delimiter("//"))
-        };
+        let config: Config = unsafe { Config::default().with_line_comment_delimiter("//") };
         for (input, expected, after_expected) in test_cases {
             let c: ParseContext = ParseContext::new(Token::from(*input), &config);
             let (result, after_result) = c.line_comment();

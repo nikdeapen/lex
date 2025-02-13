@@ -1,37 +1,60 @@
-use crate::CommentConfig;
-
 /// A parsing config.
 #[derive(Clone, Debug)]
 pub struct Config {
-    comment_config: CommentConfig,
+    line_comment_delimiter: Option<String>,
     spaces_per_tab: usize,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Self {
-            comment_config: CommentConfig::default(),
+            line_comment_delimiter: None,
             spaces_per_tab: 4,
         }
     }
 }
 
 impl Config {
-    //! Comments
+    //! Line Comment Delimiter
 
-    /// Gets the comment config.
-    pub fn comment_config(&self) -> &CommentConfig {
-        &self.comment_config
+    /// Checks if the `line_comment_delimiter` is valid.
+    pub fn is_valid_line_comment_delimiter(line_comment_delimiter: &str) -> bool {
+        !line_comment_delimiter.is_empty()
+            && !line_comment_delimiter.contains("\r")
+            && !line_comment_delimiter.contains("\n")
     }
 
-    /// Sets the comment config.
-    pub fn set_comment_config(&mut self, comment_config: CommentConfig) {
-        self.comment_config = comment_config
+    /// Gets the optional line-comment delimiter.
+    pub fn line_comment_delimiter(&self) -> Option<&str> {
+        self.line_comment_delimiter.as_ref().map(|s| s.as_str())
     }
 
-    /// Sets the comment config.
-    pub fn with_comment_config(mut self, comment_config: CommentConfig) -> Self {
-        self.set_comment_config(comment_config);
+    /// Sets the `line_comment_delimiter`.
+    ///
+    /// # Unsafe
+    /// The `line_comment_delimiter` must be valid.
+    pub unsafe fn set_line_comment_delimiter<S>(&mut self, line_comment_delimiter: S)
+    where
+        S: Into<String>,
+    {
+        let line_comment_delimiter: String = line_comment_delimiter.into();
+
+        debug_assert!(Self::is_valid_line_comment_delimiter(
+            line_comment_delimiter.as_str()
+        ));
+
+        self.line_comment_delimiter = Some(line_comment_delimiter.to_string());
+    }
+
+    /// Sets the `line_comment_delimiter`.
+    ///
+    /// # Unsafe
+    /// The `line_comment_delimiter` must be valid.
+    pub unsafe fn with_line_comment_delimiter<S>(mut self, line_comment_delimiter: S) -> Self
+    where
+        S: Into<String>,
+    {
+        self.set_line_comment_delimiter(line_comment_delimiter);
         self
     }
 }
@@ -44,7 +67,7 @@ impl Config {
         self.spaces_per_tab
     }
 
-    /// Sets the spaces per tab.
+    /// Sets the `spaces_per_tab`.
     ///
     /// # Unsafe
     /// The `spaces_per_tab` cannot be `0`.
@@ -54,7 +77,7 @@ impl Config {
         self.spaces_per_tab = spaces_per_tab;
     }
 
-    /// Sets the spaces per tab.
+    /// Sets the `spaces_per_tab`.
     ///
     /// # Unsafe
     /// The `spaces_per_tab` cannot be `0`.
