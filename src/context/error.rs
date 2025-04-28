@@ -20,6 +20,9 @@ impl<'a> ParseContext<'a> {
     /// Gets the optional text for the 0-indexed `line_number`.
     ///
     /// Returns `None` when the `line_number` is invalid.
+    ///
+    /// # Note
+    /// This is not efficient and scans the entire context.
     pub fn get_line_text(&self, line_number: usize) -> Option<&'a str> {
         let mut c: ParseContext = *self;
         for _ in 0..line_number {

@@ -1,6 +1,5 @@
 use crate::ParseContext;
 
-#[allow(dead_code)]
 impl<'a> ParseContext<'a> {
     // Indent Level
 

@@ -21,8 +21,7 @@ impl<'a> ParseContext<'a> {
     /// Returns `(None, self)` when no bytes match the prefix.
     ///
     /// # Unsafe
-    /// The `prefix_fn` must result in a valid split index. This can be ensured if the `prefix_fn`
-    /// matches only US-ASCII chars and not line-endings.
+    /// The `prefix_fn` must result in a valid split index.
     pub unsafe fn match_prefix<F>(&self, prefix_fn: F) -> (Option<Self>, Self)
     where
         F: Fn(u8) -> bool,
