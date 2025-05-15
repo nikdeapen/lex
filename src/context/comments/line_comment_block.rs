@@ -18,7 +18,7 @@ impl<'a> ParseContext<'a> {
     /// Returns the line-comments as a vec of `(delimiter, line_text)`.
     fn line_comment_block_vec(self) -> Vec<Token<'a>> {
         let mut result: Vec<Token> = Vec::default();
-        self.construct_line_comment_block(|comment| result.push(comment.clone()));
+        self.construct_line_comment_block(|comment| result.push(comment));
         result
     }
 
@@ -108,6 +108,7 @@ mod tests {
 
     #[test]
     fn line_comment_block() {
+        #[allow(clippy::useless_vec)]
         let text: String = vec![
             "ignored",
             "        /ignored",

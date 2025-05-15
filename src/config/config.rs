@@ -26,12 +26,12 @@ impl Config {
 
     /// Gets the optional line-comment delimiter.
     pub fn line_comment_delimiter(&self) -> Option<&str> {
-        self.line_comment_delimiter.as_ref().map(|s| s.as_str())
+        self.line_comment_delimiter.as_deref()
     }
 
     /// Sets the `line_comment_delimiter`.
     ///
-    /// # Unsafe
+    /// # Safety
     /// The `line_comment_delimiter` must be valid.
     pub unsafe fn set_line_comment_delimiter<S>(&mut self, line_comment_delimiter: S)
     where
@@ -48,7 +48,7 @@ impl Config {
 
     /// Sets the `line_comment_delimiter`.
     ///
-    /// # Unsafe
+    /// # Safety
     /// The `line_comment_delimiter` must be valid.
     pub unsafe fn with_line_comment_delimiter<S>(mut self, line_comment_delimiter: S) -> Self
     where
@@ -69,7 +69,7 @@ impl Config {
 
     /// Sets the `spaces_per_tab`.
     ///
-    /// # Unsafe
+    /// # Safety
     /// The `spaces_per_tab` cannot be `0`.
     pub unsafe fn set_spaces_per_tab(&mut self, spaces_per_tab: usize) {
         debug_assert_ne!(spaces_per_tab, 0);
@@ -79,7 +79,7 @@ impl Config {
 
     /// Sets the `spaces_per_tab`.
     ///
-    /// # Unsafe
+    /// # Safety
     /// The `spaces_per_tab` cannot be `0`.
     pub unsafe fn with_spaces_per_tab(mut self, spaces_per_tab: usize) -> Self {
         debug_assert_ne!(spaces_per_tab, 0);

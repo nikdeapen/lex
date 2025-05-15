@@ -26,7 +26,7 @@ impl<'a> Token<'a> {
     ///
     /// Returns `(before_index, index_and_after)`.
     ///
-    /// # Unsafe,
+    /// # Safety
     /// The `index` must be a valid split index.
     pub unsafe fn split(&self, index: usize) -> (Self, Self) {
         debug_assert!(self.is_valid_split_index(index));
@@ -51,7 +51,7 @@ impl<'a> Token<'a> {
     /// Returns `(Some(before_index), index_and_after)` if the `index` is not `0`.
     /// Returns `(None, self)` if the `index` is `0`.
     ///
-    /// # Unsafe,
+    /// # Safety
     /// The `index` must be a valid split index.
     pub unsafe fn split_optional(&self, index: usize) -> (Option<Self>, Self) {
         debug_assert!(self.is_valid_split_index(index));

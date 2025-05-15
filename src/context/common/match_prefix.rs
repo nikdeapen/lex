@@ -20,7 +20,7 @@ impl<'a> ParseContext<'a> {
     /// Returns `(Some(matched_prefix), after_matched_prefix)`.
     /// Returns `(None, self)` when no bytes match the prefix.
     ///
-    /// # Unsafe
+    /// # Safety
     /// The `prefix_fn` must result in a valid split index.
     pub unsafe fn match_prefix<F>(&self, prefix_fn: F) -> (Option<Self>, Self)
     where
