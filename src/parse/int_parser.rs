@@ -71,7 +71,7 @@ impl IntParser {
             Err(Empty)
         } else if let Some(c) = s.chars().find(|c| !c.is_ascii_digit() && *c != '_') {
             Err(InvalidChar(c))
-        } else if !self.allow_underscores && s.as_bytes().iter().any(|c| *c == b'_') {
+        } else if !self.allow_underscores && s.as_bytes().contains(&b'_') {
             Err(ContainsUnderscore)
         } else if !self.allow_starting_underscore && s.as_bytes()[0] == b'_' {
             Err(StartsWithUnderscore)
