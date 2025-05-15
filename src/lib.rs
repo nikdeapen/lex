@@ -1,3 +1,6 @@
+#![allow(clippy::module_inception)]
+#![allow(clippy::needless_lifetimes)]
+
 pub use config::*;
 pub use context::*;
 pub use error::*;

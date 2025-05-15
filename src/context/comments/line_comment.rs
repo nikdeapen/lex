@@ -28,6 +28,7 @@ mod tests {
     use crate::{Config, ParseContext, Token};
 
     #[test]
+    #[allow(clippy::type_complexity)]
     fn line_comment() {
         let test_cases: &[(&str, Option<(&str, &str, Option<&str>)>, &str)] = &[
             ("", None, ""),
