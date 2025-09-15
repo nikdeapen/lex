@@ -1,3 +1,5 @@
+#![allow(clippy::module_inception)]
+
 pub use config::*;
 pub use context::*;
 pub use error::*;
