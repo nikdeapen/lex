@@ -1,14 +1,13 @@
-use std::fmt::Debug;
-
 use crate::{Config, Error, ParseContext, Token};
+use std::fmt::Debug;
 
 impl<'a> Token<'a> {
     //! Error
 
     /// Converts the token to an error with the given `config`.
     ///
-    /// If the `token` is empty the `Error` token will be empty.
-    /// If the `token` starts with a `symbol` the `Error` token will be the `symbol`.
+    /// If the `token` is empty, the `Error` token will be empty.
+    /// If the `token` starts with a `symbol`, the `Error` token will be the `symbol`.
     /// Otherwise, the `Error` token will be the first char.
     pub fn to_error<E>(self, config: &'a Config, e: E) -> Error<'a, E>
     where

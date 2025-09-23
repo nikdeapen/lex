@@ -1,6 +1,5 @@
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-
 use crate::parse::IntParseError::*;
 
 /// Responsible for parsing integers.

@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-
 use crate::Token;
 
 /// A parsing error.
