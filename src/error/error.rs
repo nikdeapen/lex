@@ -1,6 +1,5 @@
-use std::fmt::Debug;
-
 use crate::Token;
+use std::fmt::Debug;
 
 /// A parsing error.
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]

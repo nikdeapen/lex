@@ -25,7 +25,7 @@ impl<'a> Token<'a> {
         }
     }
 
-    /// Counts the number of line-endings & gets the number of bytes after the last line-ending.
+    /// Counts the number of line-endings and gets the number of bytes after the last line-ending.
     ///
     /// A line-ending is a `CR`, `LF`, or `CRLF` sequence.
     /// The `CRLF` sequence is always treated as a single line-ending.

@@ -1,6 +1,5 @@
-use std::fmt::Debug;
-
 use crate::{Error, ParseContext};
+use std::fmt::Debug;
 
 impl<'a> ParseContext<'a> {
     //! Error
