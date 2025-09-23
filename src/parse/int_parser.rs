@@ -1,6 +1,6 @@
+use crate::parse::IntParseError::*;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use crate::parse::IntParseError::*;
 
 /// Responsible for parsing integers.
 #[derive(Copy, Clone, Debug)]
