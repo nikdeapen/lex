@@ -78,21 +78,21 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     /// Advances the parser by one token and returns it.
     ///
     /// Returns `None` if at EOF.
-    pub fn advance(&mut self) -> Option<&Token<K>> {
+    pub fn advance(&mut self) -> Option<Token<K>> {
         let pos: usize = self.pos;
         if self.tokens[pos].kind() == K::eof() {
             None
         } else {
             self.pos += 1;
             self.skip_ignored();
-            Some(&self.tokens[pos])
+            Some(self.tokens[pos])
         }
     }
 
     /// Advances if the current token matches the `kind`.
     ///
     /// Returns `None` and records an auto-generated error if it does not match.
-    pub fn expect(&mut self, kind: K) -> Option<&Token<K>> {
+    pub fn expect(&mut self, kind: K) -> Option<Token<K>> {
         if self.check(kind) {
             self.advance()
         } else {
@@ -107,7 +107,7 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     /// Advances if the current token matches the `kind`.
     ///
     /// Returns `None` and records a custom error if it does not match.
-    pub fn expect_with(&mut self, kind: K, message: impl Into<String>) -> Option<&Token<K>> {
+    pub fn expect_with(&mut self, kind: K, message: impl Into<String>) -> Option<Token<K>> {
         if self.check(kind) {
             self.advance()
         } else {
