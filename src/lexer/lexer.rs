@@ -1,9 +1,17 @@
 use crate::lexer::{Rule, Span, Token, TokenKind};
 
 /// A lexer. Converts source text into a sequence of tokens using ordered rules.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct Lexer<K> {
     rules: Vec<Rule<K>>,
+}
+
+impl<K> Default for Lexer<K> {
+    fn default() -> Self {
+        Self {
+            rules: Vec::default(),
+        }
+    }
 }
 
 impl<K> Lexer<K> {
@@ -28,7 +36,7 @@ impl<K: Copy + TokenKind> Lexer<K> {
     pub fn lex(&self, source: &str) -> Vec<Token<K>> {
         debug_assert!(source.len() <= u32::MAX as usize);
 
-        let mut tokens: Vec<Token<K>> = Vec::new();
+        let mut tokens: Vec<Token<K>> = Vec::default();
         let mut pos: usize = 0;
 
         while pos < source.len() {
@@ -44,6 +52,7 @@ impl<K: Copy + TokenKind> Lexer<K> {
     }
 
     /// Matches the first rule against the `remaining` source.
+    /// Matches the first rule against the `remaining` source.
     fn match_rule(&self, remaining: &str) -> (K, usize) {
         for rule in &self.rules {
             if let Some(len) = rule.try_match(remaining) {
@@ -52,5 +61,104 @@ impl<K: Copy + TokenKind> Lexer<K> {
         }
         let c: char = remaining.chars().next().unwrap();
         (K::unknown(), c.len_utf8())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::matchers::{digits, ident, whitespace};
+    use crate::lexer::{Lexer, Span, Token, TokenKind};
+    use crate::literal;
+
+    #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+    enum Kind {
+        Whitespace,
+        Ident,
+        Int,
+        LBrace,
+        RBrace,
+        Semi,
+        Eq,
+        Unknown,
+    }
+
+    impl TokenKind for Kind {
+        fn unknown() -> Self {
+            Kind::Unknown
+        }
+    }
+
+    fn test_lexer() -> Lexer<Kind> {
+        Lexer::default()
+            .with_rule(Kind::Whitespace, whitespace)
+            .with_rule(Kind::Ident, ident)
+            .with_rule(Kind::Int, digits)
+            .with_rule(Kind::LBrace, literal!("{"))
+            .with_rule(Kind::RBrace, literal!("}"))
+            .with_rule(Kind::Semi, literal!(";"))
+            .with_rule(Kind::Eq, literal!("="))
+    }
+
+    #[test]
+    fn fn_lex() {
+        let lexer: Lexer<Kind> = test_lexer();
+        let source: &str = "let x = 42;";
+        let tokens: Vec<Token<Kind>> = lexer.lex(source);
+
+        let expected: &[(Kind, &str)] = &[
+            (Kind::Ident, "let"),
+            (Kind::Whitespace, " "),
+            (Kind::Ident, "x"),
+            (Kind::Whitespace, " "),
+            (Kind::Eq, "="),
+            (Kind::Whitespace, " "),
+            (Kind::Int, "42"),
+            (Kind::Semi, ";"),
+        ];
+
+        assert_eq!(tokens.len(), expected.len());
+        for (token, (kind, text)) in tokens.iter().zip(expected) {
+            assert_eq!(token.kind(), *kind);
+            assert_eq!(token.text(source), *text);
+        }
+    }
+
+    #[test]
+    fn fn_lex_unknown() {
+        let lexer: Lexer<Kind> = test_lexer();
+        let source: &str = "x @ y";
+        let tokens: Vec<Token<Kind>> = lexer.lex(source);
+
+        let expected: &[(Kind, &str)] = &[
+            (Kind::Ident, "x"),
+            (Kind::Whitespace, " "),
+            (Kind::Unknown, "@"),
+            (Kind::Whitespace, " "),
+            (Kind::Ident, "y"),
+        ];
+
+        assert_eq!(tokens.len(), expected.len());
+        for (token, (kind, text)) in tokens.iter().zip(expected) {
+            assert_eq!(token.kind(), *kind);
+            assert_eq!(token.text(source), *text);
+        }
+    }
+
+    #[test]
+    fn fn_lex_empty() {
+        let lexer: Lexer<Kind> = test_lexer();
+        let tokens: Vec<Token<Kind>> = lexer.lex("");
+        assert!(tokens.is_empty());
+    }
+
+    #[test]
+    fn fn_lex_spans() {
+        let lexer: Lexer<Kind> = test_lexer();
+        let source: &str = "a 1";
+        let tokens: Vec<Token<Kind>> = lexer.lex(source);
+
+        assert_eq!(tokens[0].span(), Span::new(0, 1));
+        assert_eq!(tokens[1].span(), Span::new(1, 1));
+        assert_eq!(tokens[2].span(), Span::new(2, 1));
     }
 }
