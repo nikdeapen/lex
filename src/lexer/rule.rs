@@ -18,21 +18,17 @@ impl<K: Copy> Rule<K> {
     //! Properties
 
     /// Gets the token kind.
-    pub fn kind(&self) -> K {
+    pub(in crate::lexer) fn kind(&self) -> K {
         self.kind
     }
 
-    /// Gets the matcher function.
-    pub fn matcher(&self) -> fn(&str) -> Option<usize> {
-        self.matcher
-    }
 }
 
 impl<K> Rule<K> {
     //! Matching
 
     /// Attempts to match the `source`. Returns the number of bytes consumed.
-    pub fn try_match(&self, source: &str) -> Option<usize> {
+    pub(in crate::lexer) fn try_match(&self, source: &str) -> Option<usize> {
         (self.matcher)(source)
     }
 }

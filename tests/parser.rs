@@ -66,13 +66,13 @@ fn proto_lexer() -> Lexer<Kind> {
 
 fn parse_message(p: &mut Parser<Kind>) -> Option<Message> {
     let keyword: Token<Kind> = p.expect(Kind::Ident)?;
-    if keyword.text(p.source()) != "message" {
+    if p.text(keyword.span()) != "message" {
         p.error("expected 'message' keyword");
         return None;
     }
 
     let name: Token<Kind> = p.expect(Kind::Ident)?;
-    let name: String = name.text(p.source()).to_string();
+    let name: String = p.text(name.span()).to_string();
 
     p.expect(Kind::LBrace)?;
 
@@ -94,15 +94,15 @@ fn parse_message(p: &mut Parser<Kind>) -> Option<Message> {
 
 fn parse_field(p: &mut Parser<Kind>) -> Option<Field> {
     let type_token: Token<Kind> = p.expect(Kind::Ident)?;
-    let type_name: String = type_token.text(p.source()).to_string();
+    let type_name: String = p.text(type_token.span()).to_string();
 
     let name_token: Token<Kind> = p.expect(Kind::Ident)?;
-    let field_name: String = name_token.text(p.source()).to_string();
+    let field_name: String = p.text(name_token.span()).to_string();
 
     p.expect(Kind::Eq)?;
 
     let number_token: Token<Kind> = p.expect(Kind::Int)?;
-    let number: String = number_token.text(p.source()).to_string();
+    let number: String = p.text(number_token.span()).to_string();
 
     p.expect(Kind::Semi)?;
 

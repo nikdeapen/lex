@@ -10,11 +10,13 @@ pub struct Parser<K> {
     errors: Vec<ParseError>,
 }
 
-impl<K> Parser<K> {
+impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     //! Construction
 
     /// Creates a new parser.
     pub fn new(source: String, tokens: Vec<Token<K>>) -> Self {
+        debug_assert!(!tokens.is_empty() && tokens.last().unwrap().kind() == K::eof());
+
         Self {
             source,
             tokens,
@@ -57,13 +59,24 @@ impl<K: Copy + PartialEq> Parser<K> {
     }
 
     /// Peeks at the current token.
-    pub fn peek(&self) -> &Token<K> {
-        &self.tokens[self.pos]
+    pub fn peek(&self) -> Token<K> {
+        self.tokens[self.pos]
     }
 
-    /// Peeks at the token `n` positions ahead of the current position.
-    pub fn lookahead(&self, n: usize) -> Option<&Token<K>> {
-        self.tokens.get(self.pos + n)
+    /// Peeks at the token `n` non-skipped positions ahead of the current position.
+    pub fn lookahead(&self, n: usize) -> Option<Token<K>> {
+        let mut remaining: usize = n;
+        let mut i: usize = self.pos + 1;
+        while i < self.tokens.len() {
+            if !self.skip.contains(&self.tokens[i].kind()) {
+                if remaining == 0 {
+                    return Some(self.tokens[i]);
+                }
+                remaining -= 1;
+            }
+            i += 1;
+        }
+        None
     }
 
     /// Checks if the current token matches the `kind`.
@@ -166,5 +179,10 @@ impl<K> Parser<K> {
     /// Gets the source text.
     pub fn source(&self) -> &str {
         &self.source
+    }
+
+    /// Gets the text for a `span`.
+    pub fn text(&self, span: Span) -> &str {
+        span.text(&self.source)
     }
 }

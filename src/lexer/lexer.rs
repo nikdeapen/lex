@@ -42,6 +42,7 @@ impl<K: Copy + TokenKind> Lexer<K> {
         while pos < source.len() {
             let remaining: &str = &source[pos..];
             let (kind, len): (K, usize) = self.match_rule(remaining);
+            debug_assert!(len > 0);
             debug_assert!(source.is_char_boundary(pos + len));
             let span: Span = Span::new(pos as u32, len as u32);
             tokens.push(Token::new(kind, span));
@@ -54,11 +55,12 @@ impl<K: Copy + TokenKind> Lexer<K> {
     }
 
     /// Matches the first rule against the `remaining` source.
-    /// Matches the first rule against the `remaining` source.
     fn match_rule(&self, remaining: &str) -> (K, usize) {
         for rule in &self.rules {
             if let Some(len) = rule.try_match(remaining) {
-                return (rule.kind(), len);
+                if len > 0 {
+                    return (rule.kind(), len);
+                }
             }
         }
         let c: char = remaining.chars().next().unwrap();
