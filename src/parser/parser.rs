@@ -1,5 +1,5 @@
 use crate::lexer::{Span, Token, TokenKind};
-use crate::parser::ParseError;
+use crate::parser::{Checkpoint, ParseError};
 
 /// A parser.
 pub struct Parser<K> {
@@ -95,6 +95,21 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
         while !self.check(kind) && !self.check(K::eof()) {
             self.advance();
         }
+    }
+}
+
+impl<K> Parser<K> {
+    //! Checkpoints
+
+    /// Creates a checkpoint at the current position.
+    pub fn checkpoint(&self) -> Checkpoint {
+        Checkpoint::new(self.pos, self.errors.len())
+    }
+
+    /// Restores the parser to a previous checkpoint, rewinding position and discarding errors.
+    pub fn restore(&mut self, checkpoint: Checkpoint) {
+        self.pos = checkpoint.pos();
+        self.errors.truncate(checkpoint.error_count());
     }
 }
 
