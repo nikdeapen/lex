@@ -6,4 +6,5 @@ mod digits;
 mod ident;
 mod whitespace;
 
+mod line_comment;
 mod literal;
