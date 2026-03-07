@@ -5,4 +5,7 @@ pub trait TokenKind {
 
     /// Gets the end-of-file token kind.
     fn eof() -> Self;
+
+    /// Gets the display label for this token kind. (e.g. `"identifier"`, `"'{'"`, `"end of file"`)
+    fn label(&self) -> &'static str;
 }

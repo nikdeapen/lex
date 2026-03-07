@@ -93,6 +93,20 @@ mod tests {
         fn eof() -> Self {
             Kind::Eof
         }
+
+        fn label(&self) -> &'static str {
+            match self {
+                Kind::Whitespace => "whitespace",
+                Kind::Ident => "identifier",
+                Kind::Int => "integer",
+                Kind::LBrace => "'{'",
+                Kind::RBrace => "'}'",
+                Kind::Semi => "';'",
+                Kind::Eq => "'='",
+                Kind::Unknown => "unknown",
+                Kind::Eof => "end of file",
+            }
+        }
     }
 
     fn test_lexer() -> Lexer<Kind> {
