@@ -11,9 +11,7 @@
 #[macro_export]
 macro_rules! literal {
     ($s:literal) => {
-        |source: &str| -> Option<usize> {
-            source.starts_with($s).then_some($s.len())
-        }
+        |source: &str| -> Option<usize> { source.starts_with($s).then_some($s.len()) }
     };
 }
 

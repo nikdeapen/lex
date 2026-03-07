@@ -1,7 +1,7 @@
 use lex::lexer::matchers::{digits, ident, whitespace};
 use lex::lexer::{Lexer, Token, TokenKind};
-use lex::{line_comment, literal};
 use lex::parser::Parser;
+use lex::{line_comment, literal};
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 enum Kind {
@@ -334,10 +334,10 @@ message Person {
     assert!(parser.errors().is_empty(), "errors: {:?}", parser.errors());
     let message: CommentedMessage = message.unwrap();
 
-    assert_eq!(message.comments, vec![
-        " Describes the message.",
-        " Second line.",
-    ]);
+    assert_eq!(
+        message.comments,
+        vec![" Describes the message.", " Second line.",]
+    );
     assert_eq!(message.name, "Person");
     assert_eq!(message.fields.len(), 2);
 

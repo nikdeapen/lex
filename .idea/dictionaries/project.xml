@@ -2,6 +2,7 @@
   <dictionary name="project">
     <words>
       <w>Lexes</w>
+      <w>rustfmt</w>
     </words>
   </dictionary>
 </component>
