@@ -6,6 +6,7 @@ pub struct Parser<K> {
     source: String,
     tokens: Vec<Token<K>>,
     pos: usize,
+    skip: Vec<K>,
     errors: Vec<ParseError>,
 }
 
@@ -18,7 +19,31 @@ impl<K> Parser<K> {
             source,
             tokens,
             pos: 0,
+            skip: Vec::default(),
             errors: Vec::default(),
+        }
+    }
+}
+
+impl<K: Copy + PartialEq> Parser<K> {
+    //! Skip
+
+    /// Adds a token kind to skip during parsing.
+    pub fn add_skip(&mut self, kind: K) {
+        self.skip.push(kind);
+        self.skip_ignored();
+    }
+
+    /// Adds a token kind to skip during parsing. (builder pattern)
+    pub fn with_skip(mut self, kind: K) -> Self {
+        self.add_skip(kind);
+        self
+    }
+
+    /// Advances past any skipped tokens.
+    fn skip_ignored(&mut self) {
+        while self.skip.contains(&self.tokens[self.pos].kind()) {
+            self.pos += 1;
         }
     }
 }
@@ -54,12 +79,13 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     ///
     /// Returns `None` if at EOF.
     pub fn advance(&mut self) -> Option<&Token<K>> {
-        let token: &Token<K> = &self.tokens[self.pos];
-        if token.kind() == K::eof() {
+        let pos: usize = self.pos;
+        if self.tokens[pos].kind() == K::eof() {
             None
         } else {
             self.pos += 1;
-            Some(token)
+            self.skip_ignored();
+            Some(&self.tokens[pos])
         }
     }
 
@@ -98,7 +124,7 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     }
 }
 
-impl<K> Parser<K> {
+impl<K: Copy + PartialEq> Parser<K> {
     //! Checkpoints
 
     /// Creates a checkpoint at the current position.
@@ -110,6 +136,7 @@ impl<K> Parser<K> {
     pub fn restore(&mut self, checkpoint: Checkpoint) {
         self.pos = checkpoint.pos();
         self.errors.truncate(checkpoint.error_count());
+        self.skip_ignored();
     }
 }
 
