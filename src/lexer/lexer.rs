@@ -48,6 +48,8 @@ impl<K: Copy + TokenKind> Lexer<K> {
             pos += len;
         }
 
+        let eof_span: Span = Span::new(pos as u32, 0);
+        tokens.push(Token::new(K::eof(), eof_span));
         tokens
     }
 
@@ -80,11 +82,16 @@ mod tests {
         Semi,
         Eq,
         Unknown,
+        Eof,
     }
 
     impl TokenKind for Kind {
         fn unknown() -> Self {
             Kind::Unknown
+        }
+
+        fn eof() -> Self {
+            Kind::Eof
         }
     }
 
@@ -114,6 +121,7 @@ mod tests {
             (Kind::Whitespace, " "),
             (Kind::Int, "42"),
             (Kind::Semi, ";"),
+            (Kind::Eof, ""),
         ];
 
         assert_eq!(tokens.len(), expected.len());
@@ -135,6 +143,7 @@ mod tests {
             (Kind::Unknown, "@"),
             (Kind::Whitespace, " "),
             (Kind::Ident, "y"),
+            (Kind::Eof, ""),
         ];
 
         assert_eq!(tokens.len(), expected.len());
@@ -148,7 +157,8 @@ mod tests {
     fn fn_lex_empty() {
         let lexer: Lexer<Kind> = test_lexer();
         let tokens: Vec<Token<Kind>> = lexer.lex("");
-        assert!(tokens.is_empty());
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(tokens[0].kind(), Kind::Eof);
     }
 
     #[test]
