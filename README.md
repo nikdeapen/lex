@@ -6,7 +6,7 @@
 
 This library aids in parsing programming languages.
 
-    lex = "0.0.0"
+    lex = "0.15.0-rc.1"
 
 There are no dependencies.
 
