@@ -9,3 +9,5 @@ mod rule;
 mod span;
 mod token;
 mod token_kind;
+
+pub mod matchers;
