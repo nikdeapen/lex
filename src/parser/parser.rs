@@ -127,7 +127,7 @@ impl<K: Copy + PartialEq> Parser<K> {
         self.tokens[self.pos]
     }
 
-    /// Peeks at the token `n` non-skipped positions ahead of the current position.
+    /// Peeks at the `n`th non-skipped token after the current position. (0-indexed)
     pub fn lookahead(&self, n: usize) -> Option<Token<K>> {
         let mut remaining: usize = n;
         let mut i: usize = self.pos + 1;

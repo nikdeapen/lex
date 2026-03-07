@@ -21,7 +21,6 @@ impl<K: Copy> Rule<K> {
     pub(in crate::lexer) fn kind(&self) -> K {
         self.kind
     }
-
 }
 
 impl<K> Rule<K> {
