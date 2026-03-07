@@ -1,12 +1,20 @@
 use crate::lexer::{Span, Token, TokenKind};
 use crate::parser::{Checkpoint, ParseError};
 
+/// A line comment configuration.
+#[derive(Copy, Clone)]
+struct CommentConfig<K> {
+    kind: K,
+    delimiter_len: usize,
+}
+
 /// A parser.
 pub struct Parser<K> {
     source: String,
     tokens: Vec<Token<K>>,
     pos: usize,
     skip: Vec<K>,
+    comment: Option<CommentConfig<K>>,
     errors: Vec<ParseError>,
 }
 
@@ -22,6 +30,7 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
             tokens,
             pos: 0,
             skip: Vec::default(),
+            comment: None,
             errors: Vec::default(),
         }
     }
@@ -47,6 +56,61 @@ impl<K: Copy + PartialEq> Parser<K> {
         while self.skip.contains(&self.tokens[self.pos].kind()) {
             self.pos += 1;
         }
+    }
+}
+
+impl<K: Copy + PartialEq> Parser<K> {
+    //! Comments
+
+    /// Configures line comment extraction.
+    pub fn with_line_comment(mut self, kind: K, delimiter: &str) -> Self {
+        self.comment = Some(CommentConfig {
+            kind,
+            delimiter_len: delimiter.len(),
+        });
+        self
+    }
+
+    /// Gets the leading comment spans before the current position.
+    ///
+    /// Each span covers the text after the delimiter and before the line ending. Walks backward
+    /// through the token stream, skipping whitespace, collecting consecutive comment tokens.
+    pub fn leading_comments(&self) -> Vec<Span> {
+        let config: CommentConfig<K> = match self.comment {
+            Some(c) => c,
+            None => return Vec::default(),
+        };
+
+        let mut comments: Vec<Span> = Vec::default();
+        let mut i: usize = self.pos;
+
+        while i > 0 {
+            i -= 1;
+            let token: Token<K> = self.tokens[i];
+            if self.skip.contains(&token.kind()) && token.kind() != config.kind {
+                continue;
+            }
+            if token.kind() != config.kind {
+                break;
+            }
+
+            let offset: u32 = token.span().offset() + config.delimiter_len as u32;
+            let mut len: u32 = token.span().len() - config.delimiter_len as u32;
+
+            // trim trailing newline
+            let text: &str = Span::new(offset, len).text(&self.source);
+            if text.ends_with('\n') {
+                len -= 1;
+            }
+            if Span::new(offset, len).text(&self.source).ends_with('\r') {
+                len -= 1;
+            }
+
+            comments.push(Span::new(offset, len));
+        }
+
+        comments.reverse();
+        comments
     }
 }
 

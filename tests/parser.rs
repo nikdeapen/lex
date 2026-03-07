@@ -1,11 +1,12 @@
 use lex::lexer::matchers::{digits, ident, whitespace};
 use lex::lexer::{Lexer, Token, TokenKind};
-use lex::literal;
+use lex::{line_comment, literal};
 use lex::parser::Parser;
 
 #[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
 enum Kind {
     Whitespace,
+    LineComment,
     Ident,
     Int,
     LBrace,
@@ -28,6 +29,7 @@ impl TokenKind for Kind {
     fn label(&self) -> &'static str {
         match self {
             Kind::Whitespace => "whitespace",
+            Kind::LineComment => "line comment",
             Kind::Ident => "identifier",
             Kind::Int => "integer",
             Kind::LBrace => "'{'",
@@ -56,6 +58,7 @@ struct Field {
 fn proto_lexer() -> Lexer<Kind> {
     Lexer::default()
         .with_rule(Kind::Whitespace, whitespace)
+        .with_rule(Kind::LineComment, line_comment!("//"))
         .with_rule(Kind::Ident, ident)
         .with_rule(Kind::Int, digits)
         .with_rule(Kind::LBrace, literal!("{"))
@@ -225,4 +228,140 @@ fn fn_parse_message_multiline() {
     assert_eq!(message.fields[0].field_name, "name");
     assert_eq!(message.fields[1].field_name, "email");
     assert_eq!(message.fields[2].field_name, "age");
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct CommentedMessage {
+    comments: Vec<String>,
+    name: String,
+    fields: Vec<CommentedField>,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct CommentedField {
+    comments: Vec<String>,
+    type_name: String,
+    field_name: String,
+    number: String,
+}
+
+fn parse_commented_message(p: &mut Parser<Kind>) -> Option<CommentedMessage> {
+    let comments: Vec<String> = p
+        .leading_comments()
+        .iter()
+        .map(|s| s.text(p.source()).to_string())
+        .collect();
+
+    let keyword: Token<Kind> = p.expect(Kind::Ident)?;
+    if p.text(keyword.span()) != "message" {
+        p.error("expected 'message' keyword");
+        return None;
+    }
+
+    let name: Token<Kind> = p.expect(Kind::Ident)?;
+    let name: String = p.text(name.span()).to_string();
+
+    p.expect(Kind::LBrace)?;
+
+    let mut fields: Vec<CommentedField> = Vec::default();
+    while !p.check(Kind::RBrace) && !p.check(Kind::Eof) {
+        match parse_commented_field(p) {
+            Some(field) => fields.push(field),
+            None => {
+                p.skip_until(Kind::Semi);
+                p.advance();
+            }
+        }
+    }
+
+    p.expect(Kind::RBrace)?;
+
+    Some(CommentedMessage {
+        comments,
+        name,
+        fields,
+    })
+}
+
+fn parse_commented_field(p: &mut Parser<Kind>) -> Option<CommentedField> {
+    let comments: Vec<String> = p
+        .leading_comments()
+        .iter()
+        .map(|s| s.text(p.source()).to_string())
+        .collect();
+
+    let type_token: Token<Kind> = p.expect(Kind::Ident)?;
+    let type_name: String = p.text(type_token.span()).to_string();
+
+    let name_token: Token<Kind> = p.expect(Kind::Ident)?;
+    let field_name: String = p.text(name_token.span()).to_string();
+
+    p.expect(Kind::Eq)?;
+
+    let number_token: Token<Kind> = p.expect(Kind::Int)?;
+    let number: String = p.text(number_token.span()).to_string();
+
+    p.expect(Kind::Semi)?;
+
+    Some(CommentedField {
+        comments,
+        type_name,
+        field_name,
+        number,
+    })
+}
+
+#[test]
+fn fn_parse_message_comments() {
+    let source: String = r#"// Describes the message.
+// Second line.
+message Person {
+    // The person's name.
+    string name = 1;
+    // The person's age.
+    int32 age = 2;
+}"#
+    .to_string();
+    let lexer: Lexer<Kind> = proto_lexer();
+    let tokens: Vec<Token<Kind>> = lexer.lex(&source);
+    let mut parser: Parser<Kind> = Parser::new(source, tokens)
+        .with_skip(Kind::Whitespace)
+        .with_skip(Kind::LineComment)
+        .with_line_comment(Kind::LineComment, "//");
+
+    let message: Option<CommentedMessage> = parse_commented_message(&mut parser);
+
+    assert!(parser.errors().is_empty(), "errors: {:?}", parser.errors());
+    let message: CommentedMessage = message.unwrap();
+
+    assert_eq!(message.comments, vec![
+        " Describes the message.",
+        " Second line.",
+    ]);
+    assert_eq!(message.name, "Person");
+    assert_eq!(message.fields.len(), 2);
+
+    assert_eq!(message.fields[0].comments, vec![" The person's name."]);
+    assert_eq!(message.fields[0].field_name, "name");
+
+    assert_eq!(message.fields[1].comments, vec![" The person's age."]);
+    assert_eq!(message.fields[1].field_name, "age");
+}
+
+#[test]
+fn fn_parse_message_no_comments() {
+    let source: String = "message Foo { string name = 1; }".to_string();
+    let lexer: Lexer<Kind> = proto_lexer();
+    let tokens: Vec<Token<Kind>> = lexer.lex(&source);
+    let mut parser: Parser<Kind> = Parser::new(source, tokens)
+        .with_skip(Kind::Whitespace)
+        .with_skip(Kind::LineComment)
+        .with_line_comment(Kind::LineComment, "//");
+
+    let message: Option<CommentedMessage> = parse_commented_message(&mut parser);
+
+    assert!(parser.errors().is_empty(), "errors: {:?}", parser.errors());
+    let message: CommentedMessage = message.unwrap();
+    assert!(message.comments.is_empty());
+    assert!(message.fields[0].comments.is_empty());
 }
