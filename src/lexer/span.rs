@@ -42,7 +42,7 @@ impl Span {
     //! Text
 
     /// Gets the text from the `source`.
-    pub fn text<'src>(self, source: &'src str) -> &'src str {
+    pub fn text(self, source: &str) -> &str {
         debug_assert!(source.len() <= u32::MAX as usize);
 
         let start: usize = self.offset as usize;

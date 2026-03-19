@@ -30,7 +30,7 @@ impl<K: Copy> Token<K> {
     }
 
     /// Gets the token text from the `source`.
-    pub fn text<'src>(self, source: &'src str) -> &'src str {
+    pub fn text(self, source: &str) -> &str {
         self.span.text(source)
     }
 }
