@@ -18,12 +18,12 @@ impl Checkpoint {
     //! Properties
 
     /// Gets the token position.
-    pub(in crate::parser) fn pos(&self) -> usize {
+    pub(in crate::parser) fn pos(self) -> usize {
         self.pos
     }
 
     /// Gets the error count.
-    pub(in crate::parser) fn error_count(&self) -> usize {
+    pub(in crate::parser) fn error_count(self) -> usize {
         self.error_count
     }
 }

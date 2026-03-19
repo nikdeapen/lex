@@ -20,21 +20,17 @@ impl<K: Copy> Token<K> {
     //! Properties
 
     /// Gets the token kind.
-    pub const fn kind(&self) -> K {
+    pub const fn kind(self) -> K {
         self.kind
     }
 
     /// Gets the token span.
-    pub const fn span(&self) -> Span {
+    pub const fn span(self) -> Span {
         self.span
     }
-}
-
-impl<K> Token<K> {
-    //! Text
 
     /// Gets the token text from the `source`.
-    pub fn text<'src>(&self, source: &'src str) -> &'src str {
+    pub fn text<'src>(self, source: &'src str) -> &'src str {
         self.span.text(source)
     }
 }
