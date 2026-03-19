@@ -6,7 +6,7 @@
 
 This library aids in parsing programming languages.
 
-    lex = "0.15.0-rc.1"
+    lex = "0.15.0"
 
 There are no dependencies.
 
@@ -20,12 +20,12 @@ use lex::lexer::matchers::{ident, whitespace};
 use lex::lexer::{Lexer, Token, TokenKind};
 use lex::literal;
 
-let lexer: Lexer<Kind> = Lexer::default ()
+let lexer: Lexer<Kind> = Lexer::default()
 .with_rule(Kind::Whitespace, whitespace)
 .with_rule(Kind::Ident, ident)
 .with_rule(Kind::Semi, literal!(";"));
 
-let tokens: Vec<Token<Kind> > = lexer.lex("let x;");
+let tokens: Vec<Token<Kind>> = lexer.lex("let x;");
 ```
 
 ## Parser
@@ -39,7 +39,7 @@ use lex::parser::Parser;
 let mut parser: Parser<Kind> = Parser::new(source, tokens)
 .with_skip(Kind::Whitespace);
 
-let token: Token<Kind> = parser.expect(Kind::Ident) ?;
+let token: Token<Kind> = parser.expect(Kind::Ident)?;
 ```
 
 ## Built-in Matchers

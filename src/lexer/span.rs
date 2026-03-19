@@ -23,17 +23,17 @@ impl Span {
     //! Properties
 
     /// Gets the byte offset. (0-indexed)
-    pub const fn offset(&self) -> u32 {
+    pub const fn offset(self) -> u32 {
         self.offset
     }
 
     /// Gets the number of bytes.
-    pub const fn len(&self) -> u32 {
+    pub const fn len(self) -> u32 {
         self.len
     }
 
     /// Checks if the span is empty.
-    pub const fn is_empty(&self) -> bool {
+    pub const fn is_empty(self) -> bool {
         self.len == 0
     }
 }
@@ -42,7 +42,7 @@ impl Span {
     //! Text
 
     /// Gets the text from the `source`.
-    pub fn text<'src>(&self, source: &'src str) -> &'src str {
+    pub fn text(self, source: &str) -> &str {
         debug_assert!(source.len() <= u32::MAX as usize);
 
         let start: usize = self.offset as usize;
