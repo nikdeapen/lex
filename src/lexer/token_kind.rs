@@ -1,11 +1,15 @@
+use std::fmt::Debug;
+
 /// A kind of lexical token.
-pub trait TokenKind {
-    /// Gets the kind of token to be used when there are no matching rules.
-    fn unknown() -> Self;
+pub trait TokenKind: Debug {
+    /// Gets the kind of lexical token for unrecognized tokens.
+    fn unrecognized() -> Self;
 
     /// Gets the end-of-file token kind.
-    fn eof() -> Self;
+    fn end_of_file() -> Self;
 
-    /// Gets the display label for this token kind. (e.g. `"identifier"`, `"'{'"`, `"end of file"`)
-    fn label(&self) -> &'static str;
+    /// Gets the display label for this token kind. (e.g. `"identifier"`, `"'{'"`, `"end-of-file"`)
+    fn label(&self) -> String {
+        format!("{:?}", self)
+    }
 }

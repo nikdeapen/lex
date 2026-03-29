@@ -1,4 +1,5 @@
-/// Matches one or more ASCII whitespace bytes: spaces, tabs, newlines, and carriage returns.
+/// Matches one or more ASCII whitespace bytes: spaces, tabs, newlines, carriage returns, and form
+/// feeds.
 pub fn whitespace(source: &str) -> Option<usize> {
     let bytes: &[u8] = source.as_bytes();
     let mut len: usize = 0;

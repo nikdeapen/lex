@@ -1,5 +1,5 @@
 /// A lexer rule. Maps a matcher function to a kind of lexical token.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Rule<K> {
     kind: K,
     matcher: fn(&str) -> Option<usize>,
@@ -18,7 +18,7 @@ impl<K: Copy> Rule<K> {
     //! Properties
 
     /// Gets the token kind.
-    pub(in crate::lexer) fn kind(&self) -> K {
+    pub(in crate::lexer) fn kind(self) -> K {
         self.kind
     }
 }

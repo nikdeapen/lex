@@ -1,12 +1,6 @@
 use crate::lexer::{Span, Token, TokenKind};
+use crate::parser::comment_config::CommentConfig;
 use crate::parser::{Checkpoint, ParseError};
-
-/// A line comment configuration.
-#[derive(Copy, Clone)]
-struct CommentConfig<K> {
-    kind: K,
-    delimiter_len: usize,
-}
 
 /// A parser.
 pub struct Parser<K> {
@@ -23,7 +17,7 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
 
     /// Creates a new parser.
     pub fn new(source: String, tokens: Vec<Token<K>>) -> Self {
-        debug_assert!(!tokens.is_empty() && tokens.last().unwrap().kind() == K::eof());
+        debug_assert!(!tokens.is_empty() && tokens.last().unwrap().kind() == K::end_of_file());
 
         Self {
             source,
@@ -46,6 +40,7 @@ impl<K: Copy + PartialEq> Parser<K> {
     }
 
     /// Adds a token kind to skip during parsing. (builder pattern)
+    #[must_use]
     pub fn with_skip(mut self, kind: K) -> Self {
         self.add_skip(kind);
         self
@@ -63,6 +58,7 @@ impl<K: Copy + PartialEq> Parser<K> {
     //! Comments
 
     /// Configures line comment extraction.
+    #[must_use]
     pub fn with_line_comment(mut self, kind: K, delimiter: &str) -> Self {
         self.comment = Some(CommentConfig {
             kind,
@@ -127,10 +123,12 @@ impl<K: Copy + PartialEq> Parser<K> {
         self.tokens[self.pos]
     }
 
-    /// Peeks at the `n`th non-skipped token after the current position. (0-indexed)
+    /// Peeks at the `n`th non-skipped token from the current position. (0-indexed)
+    ///
+    /// `lookahead(0)` is equivalent to `peek()`.
     pub fn lookahead(&self, n: usize) -> Option<Token<K>> {
         let mut remaining: usize = n;
-        let mut i: usize = self.pos + 1;
+        let mut i: usize = self.pos;
         while i < self.tokens.len() {
             if !self.skip.contains(&self.tokens[i].kind()) {
                 if remaining == 0 {
@@ -157,7 +155,7 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     /// Returns `None` if at EOF.
     pub fn advance(&mut self) -> Option<Token<K>> {
         let pos: usize = self.pos;
-        if self.tokens[pos].kind() == K::eof() {
+        if self.tokens[pos].kind() == K::end_of_file() {
             None
         } else {
             self.pos += 1;
@@ -168,13 +166,24 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
 
     /// Advances if the current token matches the `kind`.
     ///
+    /// Returns `None` without recording an error if it does not match.
+    pub fn accept(&mut self, kind: K) -> Option<Token<K>> {
+        if self.check(kind) {
+            self.advance()
+        } else {
+            None
+        }
+    }
+
+    /// Advances if the current token matches the `kind`.
+    ///
     /// Returns `None` and records an auto-generated error if it does not match.
     pub fn expect(&mut self, kind: K) -> Option<Token<K>> {
         if self.check(kind) {
             self.advance()
         } else {
-            let found: &'static str = self.peek().kind().label();
-            let expected: &'static str = kind.label();
+            let found: String = self.peek().kind().label();
+            let expected: String = kind.label();
             let message: String = format!("expected {expected}, found {found}");
             self.error(message);
             None
@@ -195,7 +204,7 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
 
     /// Advances until the current token matches the `kind` or EOF is reached.
     pub fn skip_until(&mut self, kind: K) {
-        while !self.check(kind) && !self.check(K::eof()) {
+        while !self.check(kind) && !self.check(K::end_of_file()) {
             self.advance();
         }
     }

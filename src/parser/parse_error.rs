@@ -1,7 +1,9 @@
+use std::fmt::{Display, Formatter};
+
 use crate::lexer::Span;
 
 /// A parse error.
-#[derive(Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct ParseError {
     span: Span,
     message: String,
@@ -32,3 +34,11 @@ impl ParseError {
         &self.message
     }
 }
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "byte {}: {}", self.span.offset(), self.message)
+    }
+}
+
+impl std::error::Error for ParseError {}
