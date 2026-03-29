@@ -15,12 +15,10 @@ macro_rules! keyword {
         |source: &str| -> Option<usize> {
             if source.starts_with($s) {
                 let len: usize = $s.len();
-                if len >= source.len()
-                    || {
-                        let next: u8 = source.as_bytes()[len];
-                        !next.is_ascii_alphanumeric() && next != b'_'
-                    }
-                {
+                if len >= source.len() || {
+                    let next: u8 = source.as_bytes()[len];
+                    !next.is_ascii_alphanumeric() && next != b'_'
+                } {
                     Some(len)
                 } else {
                     None

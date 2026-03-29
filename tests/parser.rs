@@ -139,10 +139,7 @@ fn fn_parse_message_missing_brace() {
 
     assert!(message.is_none());
     assert_eq!(parser.errors().len(), 1);
-    assert_eq!(
-        parser.errors()[0].message(),
-        "expected LBrace, found Ident"
-    );
+    assert_eq!(parser.errors()[0].message(), "expected LBrace, found Ident");
 }
 
 #[test]
