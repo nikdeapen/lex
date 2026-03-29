@@ -6,27 +6,37 @@
 
 This library aids in parsing programming languages.
 
-    lex = "0.15.0"
+    lex = "0.16.0-rc.1"
 
 There are no dependencies.
 
 ## Lexer
 
-The lexer converts source text into a sequence of tokens using ordered rules. Tokens are generic
-over a user-defined `TokenKind` enum. The lexer is error-free — all input is tokenizable.
+The `lexer!` macro defines a token kind enum, implements the `TokenKind` trait, and generates a
+lexer constructor — all in one declaration. Rules are matched in declaration order.
 
 ```rust
-use lex::lexer::matchers::{ident, whitespace};
-use lex::lexer::{Lexer, Token, TokenKind};
-use lex::literal;
+use lex::lexer::matchers::{digits, ident, whitespace};
+use lex::{keyword, lexer, line_comment, literal};
 
-let lexer: Lexer<Kind> = Lexer::default()
-.with_rule(Kind::Whitespace, whitespace)
-.with_rule(Kind::Ident, ident)
-.with_rule(Kind::Semi, literal!(";"));
+lexer! {
+    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+    pub enum Kind {
+        LineComment: line_comment!("//"),
+        Whitespace: whitespace,
+        Import: keyword!("import"),
+        Ident: ident,
+        Integer: digits,
+        LBrace: literal!("{"),
+        RBrace: literal!("}"),
+        Semi: literal!(";"),
+    }
+}
 
-let tokens: Vec<Token<Kind>> = lexer.lex("let x;");
+let tokens = Kind::lexer().lex("import foo;");
 ```
+
+`Unrecognized` and `EndOfFile` variants are added automatically.
 
 ## Parser
 
@@ -37,9 +47,9 @@ multi-error recovery, and leading comment extraction.
 use lex::parser::Parser;
 
 let mut parser: Parser<Kind> = Parser::new(source, tokens)
-.with_skip(Kind::Whitespace);
+    .with_skip(Kind::Whitespace);
 
-let token: Token<Kind> = parser.expect(Kind::Ident)?;
+let token = parser.expect(Kind::Ident)?;
 ```
 
 ## Built-in Matchers
@@ -48,4 +58,5 @@ let token: Token<Kind> = parser.expect(Kind::Ident)?;
 - `digits` — `[0-9]+`
 - `whitespace` — ASCII whitespace
 - `literal!("...")` — exact string match
+- `keyword!("...")` — exact string match with word boundary
 - `line_comment!("//")` — line comment with delimiter

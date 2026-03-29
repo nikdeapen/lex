@@ -1,7 +1,7 @@
 use crate::lexer::{Rule, Span, Token, TokenKind};
 
 /// A lexer. Converts source text into a sequence of tokens using ordered rules.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Lexer<K> {
     rules: Vec<Rule<K>>,
 }
@@ -23,6 +23,7 @@ impl<K> Lexer<K> {
     }
 
     /// Adds a rule to the lexer. (builder pattern)
+    #[must_use]
     pub fn with_rule(mut self, kind: K, matcher: fn(&str) -> Option<usize>) -> Self {
         self.add_rule(kind, matcher);
         self
@@ -50,7 +51,7 @@ impl<K: Copy + TokenKind> Lexer<K> {
         }
 
         let eof_span: Span = Span::new(pos as u32, 0);
-        tokens.push(Token::new(K::eof(), eof_span));
+        tokens.push(Token::new(K::end_of_file(), eof_span));
         tokens
     }
 
@@ -64,67 +65,32 @@ impl<K: Copy + TokenKind> Lexer<K> {
             }
         }
         let c: char = remaining.chars().next().unwrap();
-        (K::unknown(), c.len_utf8())
+        (K::unrecognized(), c.len_utf8())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::lexer::matchers::{digits, ident, whitespace};
-    use crate::lexer::{Lexer, Span, Token, TokenKind};
+    use crate::lexer::{Lexer, Span, Token};
     use crate::literal;
 
-    #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-    enum Kind {
-        Whitespace,
-        Ident,
-        Int,
-        LBrace,
-        RBrace,
-        Semi,
-        Eq,
-        Unknown,
-        Eof,
-    }
-
-    impl TokenKind for Kind {
-        fn unknown() -> Self {
-            Kind::Unknown
+    crate::lexer! {
+        #[derive(Copy, Clone, Eq, PartialEq, Debug)]
+        enum Kind {
+            Whitespace: whitespace,
+            Ident: ident,
+            Int: digits,
+            LBrace: literal!("{"),
+            RBrace: literal!("}"),
+            Semi: literal!(";"),
+            Eq: literal!("="),
         }
-
-        fn eof() -> Self {
-            Kind::Eof
-        }
-
-        fn label(&self) -> &'static str {
-            match self {
-                Kind::Whitespace => "whitespace",
-                Kind::Ident => "identifier",
-                Kind::Int => "integer",
-                Kind::LBrace => "'{'",
-                Kind::RBrace => "'}'",
-                Kind::Semi => "';'",
-                Kind::Eq => "'='",
-                Kind::Unknown => "unknown",
-                Kind::Eof => "end of file",
-            }
-        }
-    }
-
-    fn test_lexer() -> Lexer<Kind> {
-        Lexer::default()
-            .with_rule(Kind::Whitespace, whitespace)
-            .with_rule(Kind::Ident, ident)
-            .with_rule(Kind::Int, digits)
-            .with_rule(Kind::LBrace, literal!("{"))
-            .with_rule(Kind::RBrace, literal!("}"))
-            .with_rule(Kind::Semi, literal!(";"))
-            .with_rule(Kind::Eq, literal!("="))
     }
 
     #[test]
-    fn fn_lex() {
-        let lexer: Lexer<Kind> = test_lexer();
+    fn lex() {
+        let lexer: Lexer<Kind> = Kind::lexer();
         let source: &str = "let x = 42;";
         let tokens: Vec<Token<Kind>> = lexer.lex(source);
 
@@ -137,7 +103,7 @@ mod tests {
             (Kind::Whitespace, " "),
             (Kind::Int, "42"),
             (Kind::Semi, ";"),
-            (Kind::Eof, ""),
+            (Kind::EndOfFile, ""),
         ];
 
         assert_eq!(tokens.len(), expected.len());
@@ -148,18 +114,18 @@ mod tests {
     }
 
     #[test]
-    fn fn_lex_unknown() {
-        let lexer: Lexer<Kind> = test_lexer();
+    fn lex_unknown() {
+        let lexer: Lexer<Kind> = Kind::lexer();
         let source: &str = "x @ y";
         let tokens: Vec<Token<Kind>> = lexer.lex(source);
 
         let expected: &[(Kind, &str)] = &[
             (Kind::Ident, "x"),
             (Kind::Whitespace, " "),
-            (Kind::Unknown, "@"),
+            (Kind::Unrecognized, "@"),
             (Kind::Whitespace, " "),
             (Kind::Ident, "y"),
-            (Kind::Eof, ""),
+            (Kind::EndOfFile, ""),
         ];
 
         assert_eq!(tokens.len(), expected.len());
@@ -170,16 +136,16 @@ mod tests {
     }
 
     #[test]
-    fn fn_lex_empty() {
-        let lexer: Lexer<Kind> = test_lexer();
+    fn lex_empty() {
+        let lexer: Lexer<Kind> = Kind::lexer();
         let tokens: Vec<Token<Kind>> = lexer.lex("");
         assert_eq!(tokens.len(), 1);
-        assert_eq!(tokens[0].kind(), Kind::Eof);
+        assert_eq!(tokens[0].kind(), Kind::EndOfFile);
     }
 
     #[test]
-    fn fn_lex_spans() {
-        let lexer: Lexer<Kind> = test_lexer();
+    fn lex_spans() {
+        let lexer: Lexer<Kind> = Kind::lexer();
         let source: &str = "a 1";
         let tokens: Vec<Token<Kind>> = lexer.lex(source);
 

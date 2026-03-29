@@ -1,7 +1,8 @@
 use crate::lexer::Span;
+use std::fmt::{Display, Formatter};
 
 /// A lexical token.
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Token<K> {
     kind: K,
     span: Span,
@@ -32,5 +33,11 @@ impl<K: Copy> Token<K> {
     /// Gets the token text from the `source`.
     pub fn text(self, source: &str) -> &str {
         self.span.text(source)
+    }
+}
+
+impl<K: Display> Display for Token<K> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "token[{}, {}]", self.kind, self.span)
     }
 }

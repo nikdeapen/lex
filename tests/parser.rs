@@ -1,44 +1,19 @@
 use lex::lexer::matchers::{digits, ident, whitespace};
-use lex::lexer::{Lexer, Token, TokenKind};
+use lex::lexer::{Lexer, Token};
 use lex::parser::Parser;
-use lex::{line_comment, literal};
+use lex::{lexer, line_comment, literal};
 
-#[derive(Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash, Debug)]
-enum Kind {
-    Whitespace,
-    LineComment,
-    Ident,
-    Int,
-    LBrace,
-    RBrace,
-    Eq,
-    Semi,
-    Unknown,
-    Eof,
-}
-
-impl TokenKind for Kind {
-    fn unknown() -> Self {
-        Kind::Unknown
-    }
-
-    fn eof() -> Self {
-        Kind::Eof
-    }
-
-    fn label(&self) -> &'static str {
-        match self {
-            Kind::Whitespace => "whitespace",
-            Kind::LineComment => "line comment",
-            Kind::Ident => "identifier",
-            Kind::Int => "integer",
-            Kind::LBrace => "'{'",
-            Kind::RBrace => "'}'",
-            Kind::Eq => "'='",
-            Kind::Semi => "';'",
-            Kind::Unknown => "unknown",
-            Kind::Eof => "end of file",
-        }
+lexer! {
+    #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+    enum Kind {
+        Whitespace: whitespace,
+        LineComment: line_comment!("//"),
+        Ident: ident,
+        Int: digits,
+        LBrace: literal!("{"),
+        RBrace: literal!("}"),
+        Eq: literal!("="),
+        Semi: literal!(";"),
     }
 }
 
@@ -55,18 +30,6 @@ struct Field {
     number: String,
 }
 
-fn proto_lexer() -> Lexer<Kind> {
-    Lexer::default()
-        .with_rule(Kind::Whitespace, whitespace)
-        .with_rule(Kind::LineComment, line_comment!("//"))
-        .with_rule(Kind::Ident, ident)
-        .with_rule(Kind::Int, digits)
-        .with_rule(Kind::LBrace, literal!("{"))
-        .with_rule(Kind::RBrace, literal!("}"))
-        .with_rule(Kind::Eq, literal!("="))
-        .with_rule(Kind::Semi, literal!(";"))
-}
-
 fn parse_message(p: &mut Parser<Kind>) -> Option<Message> {
     let keyword: Token<Kind> = p.expect(Kind::Ident)?;
     if p.text(keyword.span()) != "message" {
@@ -80,7 +43,7 @@ fn parse_message(p: &mut Parser<Kind>) -> Option<Message> {
     p.expect(Kind::LBrace)?;
 
     let mut fields: Vec<Field> = Vec::default();
-    while !p.check(Kind::RBrace) && !p.check(Kind::Eof) {
+    while !p.check(Kind::RBrace) && !p.check(Kind::EndOfFile) {
         match parse_field(p) {
             Some(field) => fields.push(field),
             None => {
@@ -119,7 +82,7 @@ fn parse_field(p: &mut Parser<Kind>) -> Option<Field> {
 #[test]
 fn fn_parse_message() {
     let source: String = "message Foo { string name = 1; int32 id = 2; }".to_string();
-    let lexer: Lexer<Kind> = proto_lexer();
+    let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
@@ -149,7 +112,7 @@ fn fn_parse_message() {
 #[test]
 fn fn_parse_message_empty() {
     let source: String = "message Empty {}".to_string();
-    let lexer: Lexer<Kind> = proto_lexer();
+    let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
@@ -168,7 +131,7 @@ fn fn_parse_message_empty() {
 #[test]
 fn fn_parse_message_missing_brace() {
     let source: String = "message Foo string name = 1; }".to_string();
-    let lexer: Lexer<Kind> = proto_lexer();
+    let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
@@ -176,16 +139,13 @@ fn fn_parse_message_missing_brace() {
 
     assert!(message.is_none());
     assert_eq!(parser.errors().len(), 1);
-    assert_eq!(
-        parser.errors()[0].message(),
-        "expected '{', found identifier"
-    );
+    assert_eq!(parser.errors()[0].message(), "expected LBrace, found Ident");
 }
 
 #[test]
 fn fn_parse_message_recovery() {
     let source: String = "message Foo { string = 1; int32 id = 2; }".to_string();
-    let lexer: Lexer<Kind> = proto_lexer();
+    let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
@@ -215,7 +175,7 @@ fn fn_parse_message_multiline() {
     int32 age = 3;
 }"#
     .to_string();
-    let lexer: Lexer<Kind> = proto_lexer();
+    let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
@@ -264,7 +224,7 @@ fn parse_commented_message(p: &mut Parser<Kind>) -> Option<CommentedMessage> {
     p.expect(Kind::LBrace)?;
 
     let mut fields: Vec<CommentedField> = Vec::default();
-    while !p.check(Kind::RBrace) && !p.check(Kind::Eof) {
+    while !p.check(Kind::RBrace) && !p.check(Kind::EndOfFile) {
         match parse_commented_field(p) {
             Some(field) => fields.push(field),
             None => {
@@ -322,7 +282,7 @@ message Person {
     int32 age = 2;
 }"#
     .to_string();
-    let lexer: Lexer<Kind> = proto_lexer();
+    let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens)
         .with_skip(Kind::Whitespace)
@@ -351,7 +311,7 @@ message Person {
 #[test]
 fn fn_parse_message_no_comments() {
     let source: String = "message Foo { string name = 1; }".to_string();
-    let lexer: Lexer<Kind> = proto_lexer();
+    let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens)
         .with_skip(Kind::Whitespace)
