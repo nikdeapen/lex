@@ -1,5 +1,8 @@
 /// Matches an exact string literal.
 ///
+/// This does not check word boundaries. `literal!("car")` will match the `"car"` prefix of
+/// `"carpet"`. Use [keyword!] instead if you need word-boundary-aware matching.
+///
 /// # Example
 /// ```
 /// use lex::literal;

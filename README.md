@@ -6,16 +6,16 @@
 
 This library aids in parsing programming languages.
 
-    lex = "0.16.0-rc.1"
+    lex = "0.16.0-rc.2"
 
 There are no dependencies.
 
-## Lexer
+## Lexing
 
-The `lexer!` macro defines a token kind enum, implements the `TokenKind` trait, and generates a
-lexer constructor — all in one declaration. Rules are matched in declaration order.
+The `lexer!` macro defines a token kind enum, implements the `TokenKind` trait, and generates a lexer constructor — all
+in one declaration. Rules are matched in declaration order.
 
-```rust
+```rust,ignore
 use lex::lexer::matchers::{digits, ident, whitespace};
 use lex::{keyword, lexer, line_comment, literal};
 
@@ -36,20 +36,20 @@ lexer! {
 let tokens = Kind::lexer().lex("import foo;");
 ```
 
-`Unrecognized` and `EndOfFile` variants are added automatically.
+The `Unrecognized` and `EndOfFile` token variants are added automatically.
 
-## Parser
+## Parsing
 
-The parser provides a token-stream cursor with skip sets, checkpoints for backtracking,
-multi-error recovery, and leading comment extraction.
+The parser provides a token-stream cursor with skip sets, checkpoints for backtracking, multi-error recovery, and
+leading comment extraction.
 
-```rust
+```rust,ignore
 use lex::parser::Parser;
 
 let mut parser: Parser<Kind> = Parser::new(source, tokens)
-    .with_skip(Kind::Whitespace);
+.with_skip(Kind::Whitespace);
 
-let token = parser.expect(Kind::Ident)?;
+let token = parser.expect(Kind::Ident) ?;
 ```
 
 ## Built-in Matchers

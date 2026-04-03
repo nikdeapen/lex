@@ -8,7 +8,7 @@ pub trait TokenKind: Debug {
     /// Gets the end-of-file token kind.
     fn end_of_file() -> Self;
 
-    /// Gets the display label for this token kind. (e.g. `"identifier"`, `"'{'"`, `"end-of-file"`)
+    /// Gets the display label for this token kind. (ex: `"Identifier"`, `"EndOfFile"`)
     fn label(&self) -> String {
         format!("{:?}", self)
     }
