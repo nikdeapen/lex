@@ -27,7 +27,7 @@ impl<K> Rule<K> {
     //! Matching
 
     /// Attempts to match the `source`. Returns the number of bytes consumed.
-    pub(in crate::lexer) fn try_match(&self, source: &str) -> Option<usize> {
+    pub(in crate::lexer) fn try_match(self, source: &str) -> Option<usize> {
         (self.matcher)(source)
     }
 }

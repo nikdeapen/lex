@@ -11,7 +11,7 @@ pub struct Token<K> {
 impl<K> Token<K> {
     //! Construction
 
-    /// Creates a new token.
+    /// Creates a new lexical token.
     pub const fn new(kind: K, span: Span) -> Self {
         Self { kind, span }
     }
@@ -28,11 +28,6 @@ impl<K: Copy> Token<K> {
     /// Gets the token span.
     pub const fn span(self) -> Span {
         self.span
-    }
-
-    /// Gets the token text from the `source`.
-    pub fn text(self, source: &str) -> &str {
-        self.span.text(source)
     }
 }
 
