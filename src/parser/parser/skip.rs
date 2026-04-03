@@ -28,8 +28,8 @@ impl<K: Copy + PartialEq> Parser<K> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::parser::tests::{parser, K};
     use crate::parser::Parser;
+    use crate::parser::parser::tests::{K, parser};
 
     #[test]
     fn skip_advances_past_initial_whitespace() {
