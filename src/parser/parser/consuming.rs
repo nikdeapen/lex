@@ -26,6 +26,17 @@ impl<K: Copy + PartialEq + TokenKind> Parser<'_, K> {
         self.expect(kind).ok()
     }
 
+    /// Advances if the current token matches the `kind` & the `text`. (ex: a contextual keyword)
+    ///
+    /// Returns `None` if it does not match.
+    pub fn accept_text(&mut self, kind: K, text: &str) -> Option<Token<K>> {
+        if self.check_text(kind, text) {
+            self.accept(kind)
+        } else {
+            None
+        }
+    }
+
     /// Advances if the current token matches the `kind`.
     ///
     /// Returns an error with the current token if it does not match.
@@ -86,6 +97,21 @@ mod tests {
     fn accept_matches_eof() {
         let mut p: Parser<K> = parser("");
         assert_eq!(p.accept(K::EndOfFile).unwrap().kind(), K::EndOfFile);
+    }
+
+    #[test]
+    fn accept_text_consumes_matching_kind_and_text() {
+        let mut p: Parser<K> = parser("x;");
+        assert_eq!(p.accept_text(K::Ident, "x").unwrap().kind(), K::Ident);
+        assert_eq!(p.peek().kind(), K::Semi);
+    }
+
+    #[test]
+    fn accept_text_does_not_consume_on_mismatch() {
+        let mut p: Parser<K> = parser("x;");
+        assert!(p.accept_text(K::Ident, "y").is_none());
+        assert!(p.accept_text(K::Semi, "x").is_none());
+        assert_eq!(p.peek().kind(), K::Ident);
     }
 
     #[test]

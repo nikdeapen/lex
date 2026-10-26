@@ -67,6 +67,12 @@ impl<K: Copy + PartialEq> Parser<'_, K> {
     pub fn check(&self, kind: K) -> bool {
         self.peek().kind() == kind
     }
+
+    /// Checks if the current token matches the `kind` & the `text`. (ex: a contextual keyword)
+    pub fn check_text(&self, kind: K, text: &str) -> bool {
+        let token: Token<K> = self.peek();
+        token.kind() == kind && self.text(token.span()) == text
+    }
 }
 
 impl<'a, K> Parser<'a, K> {
@@ -127,6 +133,14 @@ mod tests {
         let p: Parser<K> = parser("x");
         assert!(p.check(K::Ident));
         assert!(!p.check(K::Eq));
+    }
+
+    #[test]
+    fn check_text_matches_current_kind_and_text() {
+        let p: Parser<K> = parser("x = y");
+        assert!(p.check_text(K::Ident, "x"));
+        assert!(!p.check_text(K::Ident, "y"));
+        assert!(!p.check_text(K::Eq, "x"));
     }
 
     #[test]

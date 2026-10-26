@@ -46,6 +46,8 @@ extraction.
 `expect` returns a `ParseError` with the expected token kind and the found token. To recover from an error, skip ahead
 with `skip_until` and keep parsing.
 
+For contextual keywords, lex the keywords as identifiers and match their text with `check_text` or `accept_text`.
+
 ```rust,ignore
 use lex::parser::Parser;
 
