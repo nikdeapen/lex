@@ -6,14 +6,13 @@ impl<K: Copy + PartialEq> Parser<K> {
 
     /// Creates a checkpoint at the current position.
     pub fn checkpoint(&self) -> Checkpoint {
-        Checkpoint::new(self.pos, self.errors.len())
+        Checkpoint::new(self.pos)
     }
 
-    /// Restores the parser to a previous checkpoint, rewinding position and discarding errors.
+    /// Restores the parser to a previous checkpoint, rewinding its position.
     pub fn restore(&mut self, checkpoint: Checkpoint) {
         debug_assert!(checkpoint.pos() < self.tokens.len());
         self.pos = checkpoint.pos();
-        self.errors.truncate(checkpoint.error_count());
         self.skip_ignored();
     }
 }
@@ -34,15 +33,5 @@ mod tests {
         p.restore(cp);
         assert_eq!(p.peek().kind(), K::Ident);
         assert_eq!(p.peek().span().text(p.source()), "x");
-    }
-
-    #[test]
-    fn restore_discards_errors() {
-        let mut p: Parser<K> = parser("x;");
-        let cp: Checkpoint = p.checkpoint();
-        p.expect(K::Eq);
-        assert!(p.has_errors());
-        p.restore(cp);
-        assert!(!p.has_errors());
     }
 }

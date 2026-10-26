@@ -1,5 +1,6 @@
 use super::Parser;
 use crate::lexer::{Token, TokenKind};
+use crate::parser::ParseError;
 
 impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     //! Consuming
@@ -20,39 +21,21 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
 
     /// Advances if the current token matches the `kind`.
     ///
-    /// Returns `None` without recording an error if it does not match.
+    /// Returns `None` if it does not match.
     pub fn accept(&mut self, kind: K) -> Option<Token<K>> {
-        if self.check(kind) {
-            self.advance()
-        } else {
-            None
-        }
+        self.expect(kind).ok()
     }
 
     /// Advances if the current token matches the `kind`.
     ///
-    /// Returns `None` and records an auto-generated error if it does not match.
-    pub fn expect(&mut self, kind: K) -> Option<Token<K>> {
-        if self.check(kind) {
-            self.advance()
+    /// Returns an error with the current token if it does not match.
+    pub fn expect(&mut self, kind: K) -> Result<Token<K>, ParseError<K>> {
+        let token: Token<K> = self.peek();
+        if token.kind() == kind {
+            self.advance();
+            Ok(token)
         } else {
-            let found: String = self.peek().kind().label();
-            let expected: String = kind.label();
-            let message: String = format!("expected {expected}, found {found}");
-            self.error(message);
-            None
-        }
-    }
-
-    /// Advances if the current token matches the `kind`.
-    ///
-    /// Returns `None` and records a custom error if it does not match.
-    pub fn expect_with(&mut self, kind: K, message: impl Into<String>) -> Option<Token<K>> {
-        if self.check(kind) {
-            self.advance()
-        } else {
-            self.error(message);
-            None
+            Err(ParseError::new(kind, token))
         }
     }
 
@@ -66,9 +49,9 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::Token;
-    use crate::parser::Parser;
+    use crate::lexer::{Span, Token};
     use crate::parser::parser::tests::{K, parser};
+    use crate::parser::{ParseError, Parser};
 
     #[test]
     fn advance_returns_token_and_moves_forward() {
@@ -96,30 +79,38 @@ mod tests {
     fn accept_does_not_consume_on_mismatch() {
         let mut p: Parser<K> = parser("x;");
         assert!(p.accept(K::Eq).is_none());
-        assert!(!p.has_errors());
         assert_eq!(p.peek().kind(), K::Ident);
+    }
+
+    #[test]
+    fn accept_matches_eof() {
+        let mut p: Parser<K> = parser("");
+        assert_eq!(p.accept(K::EndOfFile).unwrap().kind(), K::EndOfFile);
     }
 
     #[test]
     fn expect_consumes_matching_kind() {
         let mut p: Parser<K> = parser("x;");
-        assert!(p.expect(K::Ident).is_some());
-        assert!(!p.has_errors());
+        assert_eq!(p.expect(K::Ident).unwrap().kind(), K::Ident);
+        assert_eq!(p.peek().kind(), K::Semi);
     }
 
     #[test]
-    fn expect_records_error_on_mismatch() {
+    fn expect_returns_error_on_mismatch() {
         let mut p: Parser<K> = parser("x;");
-        assert!(p.expect(K::Eq).is_none());
-        assert!(p.has_errors());
-        assert_eq!(p.errors()[0].message(), "expected Eq, found Ident");
+        let error: ParseError<K> = p.expect(K::Eq).unwrap_err();
+        assert_eq!(error.expected(), K::Eq);
+        assert_eq!(error.found().kind(), K::Ident);
+        assert_eq!(error.span(), Span::new(0, 1));
+        assert_eq!(error.to_string(), "expected Eq, found Ident");
+        assert_eq!(p.peek().kind(), K::Ident);
     }
 
     #[test]
-    fn expect_with_records_custom_message() {
-        let mut p: Parser<K> = parser("x;");
-        assert!(p.expect_with(K::Eq, "expected '='").is_none());
-        assert_eq!(p.errors()[0].message(), "expected '='");
+    fn expect_matches_eof() {
+        let mut p: Parser<K> = parser("x");
+        p.advance();
+        assert_eq!(p.expect(K::EndOfFile).unwrap().kind(), K::EndOfFile);
     }
 
     #[test]

@@ -1,43 +1,50 @@
-use crate::lexer::Span;
+use crate::lexer::{Span, Token, TokenKind};
 use std::fmt::{Display, Formatter};
 
-/// A parse error.
-#[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub struct ParseError {
-    span: Span,
-    message: String,
+/// A parse error. (an unexpected token)
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+pub struct ParseError<K> {
+    expected: K,
+    found: Token<K>,
 }
 
-impl ParseError {
+impl<K> ParseError<K> {
     //! Construction
 
     /// Creates a new parse error.
-    pub fn new(span: Span, message: impl Into<String>) -> Self {
-        Self {
-            span,
-            message: message.into(),
-        }
+    pub const fn new(expected: K, found: Token<K>) -> Self {
+        Self { expected, found }
     }
 }
 
-impl ParseError {
+impl<K: Copy> ParseError<K> {
     //! Properties
 
-    /// Gets the error span.
-    pub fn span(&self) -> Span {
-        self.span
+    /// Gets the expected token kind.
+    pub const fn expected(self) -> K {
+        self.expected
     }
 
-    /// Gets the error message.
-    pub fn message(&self) -> &str {
-        &self.message
+    /// Gets the found token.
+    pub const fn found(self) -> Token<K> {
+        self.found
+    }
+
+    /// Gets the span of the found token.
+    pub const fn span(self) -> Span {
+        self.found.span()
     }
 }
 
-impl Display for ParseError {
+impl<K: Copy + TokenKind> Display for ParseError<K> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "byte {}: {}", self.span.offset(), self.message)
+        write!(
+            f,
+            "expected {}, found {}",
+            self.expected.label(),
+            self.found.kind().label()
+        )
     }
 }
 
-impl std::error::Error for ParseError {}
+impl<K: Copy + TokenKind> std::error::Error for ParseError<K> {}
