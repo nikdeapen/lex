@@ -43,9 +43,8 @@ struct Field {
 }
 
 fn parse_message(p: &mut Parser<'_, Kind>, errors: &mut Vec<Error>) -> Result<Message, Error> {
-    let keyword: Token<Kind> = p.expect(Kind::Ident)?;
-    if p.text(keyword.span()) != "message" {
-        return Err(Error::ExpectedMessageKeyword(keyword.span()));
+    if p.accept_text(Kind::Ident, "message").is_none() {
+        return Err(Error::ExpectedMessageKeyword(p.peek().span()));
     }
 
     let name: Token<Kind> = p.expect(Kind::Ident)?;
@@ -162,6 +161,43 @@ fn fn_parse_message_missing_brace() {
 }
 
 #[test]
+fn fn_parse_message_contextual_keyword() {
+    let source: String = "message message { message message = 1; }".to_string();
+    let lexer: Lexer<Kind> = Kind::lexer();
+    let tokens: Vec<Token<Kind>> = lexer.lex(&source);
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens).with_skip(Kind::Whitespace);
+
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
+
+    assert!(errors.is_empty(), "errors: {:?}", errors);
+    assert_eq!(
+        message,
+        Ok(Message {
+            name: "message".to_string(),
+            fields: vec![Field {
+                type_name: "message".to_string(),
+                field_name: "message".to_string(),
+                number: "1".to_string(),
+            }],
+        })
+    );
+}
+
+#[test]
+fn fn_parse_message_missing_keyword() {
+    let source: String = "struct Foo {}".to_string();
+    let lexer: Lexer<Kind> = Kind::lexer();
+    let tokens: Vec<Token<Kind>> = lexer.lex(&source);
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens).with_skip(Kind::Whitespace);
+
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
+
+    assert_eq!(message, Err(Error::ExpectedMessageKeyword(Span::new(0, 6))));
+}
+
+#[test]
 fn fn_parse_message_recovery() {
     let source: String = "message Foo { string = 1; int32 id = 2; }".to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
@@ -236,9 +272,8 @@ fn parse_commented_message(
         .map(|s| s.text(p.source()).to_string())
         .collect();
 
-    let keyword: Token<Kind> = p.expect(Kind::Ident)?;
-    if p.text(keyword.span()) != "message" {
-        return Err(Error::ExpectedMessageKeyword(keyword.span()));
+    if p.accept_text(Kind::Ident, "message").is_none() {
+        return Err(Error::ExpectedMessageKeyword(p.peek().span()));
     }
 
     let name: Token<Kind> = p.expect(Kind::Ident)?;
