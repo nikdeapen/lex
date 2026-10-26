@@ -23,13 +23,11 @@ impl Span {
 }
 
 impl Span {
-    // Combining
+    //! Combining
 
-    /// Combines two adjacent or overlapping spans into a span covering both.
+    /// Combines the span with the `other` span into a span covering both & any text between them.
     #[must_use]
     pub fn combine(self, other: Span) -> Span {
-        debug_assert!(self.end() >= other.offset || other.end() >= self.offset);
-
         let offset: u32 = self.offset.min(other.offset);
         let end: u32 = self.end().max(other.end());
         Span::new(offset, end - offset)
@@ -61,7 +59,7 @@ impl Span {
 }
 
 impl Span {
-    // Line & Column
+    //! Line & Column
 
     /// Gets the 0-indexed line and column for the start of the span.
     ///
@@ -85,7 +83,7 @@ impl Span {
 }
 
 impl Span {
-    // Char Count & Display Width
+    //! Char Count & Display Width
 
     /// Gets the number of characters in the span.
     pub fn char_count(self, source: &str) -> usize {
@@ -152,6 +150,11 @@ mod tests {
     #[test]
     fn combine_reversed() {
         assert_eq!(Span::new(5, 3).combine(Span::new(0, 3)), Span::new(0, 8));
+    }
+
+    #[test]
+    fn combine_with_gap() {
+        assert_eq!(Span::new(0, 1).combine(Span::new(10, 1)), Span::new(0, 11));
     }
 
     // Line & Column
