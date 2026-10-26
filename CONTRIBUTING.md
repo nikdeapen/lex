@@ -15,6 +15,7 @@ cargo fmt --check
 cargo build
 cargo test
 cargo clippy --all-targets -- -D warnings
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps
 ```
 
 ## Commits

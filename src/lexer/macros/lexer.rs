@@ -1,7 +1,9 @@
-/// Defines an enum with a [TokenKind] implementation and a [Lexer] constructor.
+/// Defines an enum with a [TokenKind](crate::lexer::TokenKind) implementation and a
+/// [Lexer](crate::lexer::Lexer) constructor.
 ///
 /// Automatically adds `Unrecognized` and `EndOfFile` variants to the enum, implements the
-/// [TokenKind] trait, and generates a `lexer()` method that builds a [Lexer] from the rules.
+/// [TokenKind](crate::lexer::TokenKind) trait, and generates a `lexer()` method that builds a
+/// [Lexer](crate::lexer::Lexer) from the rules.
 ///
 /// # Example
 /// ```

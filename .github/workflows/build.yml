@@ -24,3 +24,7 @@ jobs:
         run: cargo test --verbose
       - name: Lint
         run: cargo clippy --all-targets -- -D warnings
+      - name: Docs
+        run: cargo doc --no-deps
+        env:
+          RUSTDOCFLAGS: -D warnings
