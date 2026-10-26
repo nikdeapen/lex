@@ -42,7 +42,7 @@ struct Field {
     number: String,
 }
 
-fn parse_message(p: &mut Parser<Kind>, errors: &mut Vec<Error>) -> Result<Message, Error> {
+fn parse_message(p: &mut Parser<'_, Kind>, errors: &mut Vec<Error>) -> Result<Message, Error> {
     let keyword: Token<Kind> = p.expect(Kind::Ident)?;
     if p.text(keyword.span()) != "message" {
         return Err(Error::ExpectedMessageKeyword(keyword.span()));
@@ -70,7 +70,7 @@ fn parse_message(p: &mut Parser<Kind>, errors: &mut Vec<Error>) -> Result<Messag
     Ok(Message { name, fields })
 }
 
-fn parse_field(p: &mut Parser<Kind>) -> Result<Field, Error> {
+fn parse_field(p: &mut Parser<'_, Kind>) -> Result<Field, Error> {
     let type_token: Token<Kind> = p.expect(Kind::Ident)?;
     let type_name: String = p.text(type_token.span()).to_string();
 
@@ -96,7 +96,7 @@ fn fn_parse_message() {
     let source: String = "message Foo { string name = 1; int32 id = 2; }".to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
-    let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens).with_skip(Kind::Whitespace);
 
     let mut errors: Vec<Error> = Vec::default();
     let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
@@ -127,7 +127,7 @@ fn fn_parse_message_empty() {
     let source: String = "message Empty {}".to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
-    let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens).with_skip(Kind::Whitespace);
 
     let mut errors: Vec<Error> = Vec::default();
     let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
@@ -147,7 +147,7 @@ fn fn_parse_message_missing_brace() {
     let source: String = "message Foo string name = 1; }".to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
-    let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens).with_skip(Kind::Whitespace);
 
     let mut errors: Vec<Error> = Vec::default();
     let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
@@ -166,7 +166,7 @@ fn fn_parse_message_recovery() {
     let source: String = "message Foo { string = 1; int32 id = 2; }".to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
-    let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens).with_skip(Kind::Whitespace);
 
     let mut errors: Vec<Error> = Vec::default();
     let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
@@ -197,7 +197,7 @@ fn fn_parse_message_multiline() {
     .to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
-    let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens).with_skip(Kind::Whitespace);
 
     let mut errors: Vec<Error> = Vec::default();
     let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
@@ -227,7 +227,7 @@ struct CommentedField {
 }
 
 fn parse_commented_message(
-    p: &mut Parser<Kind>,
+    p: &mut Parser<'_, Kind>,
     errors: &mut Vec<Error>,
 ) -> Result<CommentedMessage, Error> {
     let comments: Vec<String> = p
@@ -267,7 +267,7 @@ fn parse_commented_message(
     })
 }
 
-fn parse_commented_field(p: &mut Parser<Kind>) -> Result<CommentedField, Error> {
+fn parse_commented_field(p: &mut Parser<'_, Kind>) -> Result<CommentedField, Error> {
     let comments: Vec<String> = p
         .leading_comments()
         .iter()
@@ -308,7 +308,7 @@ message Person {
     .to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
-    let mut parser: Parser<Kind> = Parser::new(source, tokens)
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens)
         .with_skip(Kind::Whitespace)
         .with_skip(Kind::LineComment)
         .with_line_comment(Kind::LineComment, "//");
@@ -339,7 +339,7 @@ fn fn_parse_message_no_comments() {
     let source: String = "message Foo { string name = 1; }".to_string();
     let lexer: Lexer<Kind> = Kind::lexer();
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
-    let mut parser: Parser<Kind> = Parser::new(source, tokens)
+    let mut parser: Parser<Kind> = Parser::new(&source, tokens)
         .with_skip(Kind::Whitespace)
         .with_skip(Kind::LineComment)
         .with_line_comment(Kind::LineComment, "//");

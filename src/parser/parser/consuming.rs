@@ -2,7 +2,7 @@ use super::Parser;
 use crate::lexer::{Token, TokenKind};
 use crate::parser::ParseError;
 
-impl<K: Copy + PartialEq + TokenKind> Parser<K> {
+impl<K: Copy + PartialEq + TokenKind> Parser<'_, K> {
     //! Consuming
 
     /// Advances the parser by one token and returns it.

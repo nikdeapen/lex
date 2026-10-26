@@ -1,6 +1,6 @@
 use super::Parser;
 
-impl<K: Copy + PartialEq> Parser<K> {
+impl<K: Copy + PartialEq> Parser<'_, K> {
     //! Skip
 
     /// Adds a token kind to skip during parsing.
