@@ -6,7 +6,7 @@
 
 This library aids in parsing programming languages.
 
-    lex = "0.16.0-rc.2"
+    lex = "0.16.0"
 
 The only dependency is `unicode-width`, for the display width of source text.
 
