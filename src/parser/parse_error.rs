@@ -1,6 +1,5 @@
-use std::fmt::{Display, Formatter};
-
 use crate::lexer::Span;
+use std::fmt::{Display, Formatter};
 
 /// A parse error.
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]

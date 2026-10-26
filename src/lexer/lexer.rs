@@ -34,10 +34,12 @@ impl<K: Copy + TokenKind> Lexer<K> {
     //! Lexing
 
     /// Lexes the `source` into a sequence of tokens.
+    #[must_use]
     pub fn lex(&self, source: &str) -> Vec<Token<K>> {
         debug_assert!(source.len() <= u32::MAX as usize);
 
-        let mut tokens: Vec<Token<K>> = Vec::default();
+        let capacity: usize = (source.len() / 4).max(64);
+        let mut tokens: Vec<Token<K>> = Vec::with_capacity(capacity);
         let mut pos: usize = 0;
 
         while pos < source.len() {
@@ -109,7 +111,7 @@ mod tests {
         assert_eq!(tokens.len(), expected.len());
         for (token, (kind, text)) in tokens.iter().zip(expected) {
             assert_eq!(token.kind(), *kind);
-            assert_eq!(token.text(source), *text);
+            assert_eq!(token.span().text(source), *text);
         }
     }
 
@@ -131,7 +133,7 @@ mod tests {
         assert_eq!(tokens.len(), expected.len());
         for (token, (kind, text)) in tokens.iter().zip(expected) {
             assert_eq!(token.kind(), *kind);
-            assert_eq!(token.text(source), *text);
+            assert_eq!(token.span().text(source), *text);
         }
     }
 
