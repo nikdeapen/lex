@@ -40,16 +40,19 @@ The `Unrecognized` and `EndOfFile` token variants are added automatically.
 
 ## Parsing
 
-The parser provides a token-stream cursor with skip sets, checkpoints for backtracking, multi-error recovery, and
-leading comment extraction.
+The parser provides a token-stream cursor with skip sets, checkpoints for backtracking, and leading comment
+extraction.
+
+`expect` returns a `ParseError` with the expected token kind and the found token. To recover from an error, skip ahead
+with `skip_until` and keep parsing.
 
 ```rust,ignore
 use lex::parser::Parser;
 
 let mut parser: Parser<Kind> = Parser::new(source, tokens)
-.with_skip(Kind::Whitespace);
+    .with_skip(Kind::Whitespace);
 
-let token = parser.expect(Kind::Ident) ?;
+let token = parser.expect(Kind::Ident)?;
 ```
 
 ## Built-in Matchers

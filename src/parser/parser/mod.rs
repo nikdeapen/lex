@@ -1,5 +1,5 @@
 use crate::lexer::{Span, Token, TokenKind};
-use crate::parser::{CommentConfig, ParseError};
+use crate::parser::CommentConfig;
 
 mod checkpoints;
 mod comments;
@@ -13,7 +13,6 @@ pub struct Parser<K> {
     pub(in crate::parser::parser) pos: usize,
     pub(in crate::parser::parser) skip: Vec<K>,
     pub(in crate::parser::parser) comment: Option<CommentConfig<K>>,
-    pub(in crate::parser::parser) errors: Vec<ParseError>,
 }
 
 impl<K: Copy + PartialEq + TokenKind> Parser<K> {
@@ -29,7 +28,6 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
             pos: 0,
             skip: Vec::default(),
             comment: None,
-            errors: Vec::default(),
         }
     }
 }
@@ -71,36 +69,6 @@ impl<K: Copy + PartialEq> Parser<K> {
     }
 }
 
-impl<K: Copy> Parser<K> {
-    //! Errors
-
-    /// Records an error at the current token's span.
-    pub fn error(&mut self, message: impl Into<String>) {
-        let span: Span = self.tokens[self.pos].span();
-        self.error_at(span, message);
-    }
-
-    /// Records an error at the given `span`.
-    pub fn error_at(&mut self, span: Span, message: impl Into<String>) {
-        self.errors.push(ParseError::new(span, message));
-    }
-
-    /// Checks if there are any errors.
-    pub fn has_errors(&self) -> bool {
-        !self.errors.is_empty()
-    }
-
-    /// Gets the collected errors.
-    pub fn errors(&self) -> &[ParseError] {
-        &self.errors
-    }
-
-    /// Consumes the parser and returns the collected errors.
-    pub fn into_errors(self) -> Vec<ParseError> {
-        self.errors
-    }
-}
-
 impl<K> Parser<K> {
     //! Source
 
@@ -129,7 +97,7 @@ mod tests {
     use crate::lexer::matchers::{ident, whitespace};
     use crate::lexer::{Span, Token};
     use crate::literal;
-    use crate::parser::{ParseError, Parser};
+    use crate::parser::Parser;
 
     crate::lexer! {
         #[derive(Copy, Clone, Eq, PartialEq, Debug)]
@@ -179,34 +147,6 @@ mod tests {
     fn lookahead_past_end_returns_none() {
         let p: Parser<K> = parser("x");
         assert!(p.lookahead(10).is_none());
-    }
-
-    // Errors
-
-    #[test]
-    fn error_records_at_current_span() {
-        let mut p: Parser<K> = parser("x;");
-        p.error("something wrong");
-        let error: &ParseError = &p.errors()[0];
-        assert_eq!(error.message(), "something wrong");
-        assert_eq!(error.span(), Span::new(0, 1));
-    }
-
-    #[test]
-    fn error_at_records_at_given_span() {
-        let mut p: Parser<K> = parser("x;");
-        let span: Span = Span::new(1, 1);
-        p.error_at(span, "bad semicolon");
-        assert_eq!(p.errors()[0].span(), span);
-    }
-
-    #[test]
-    fn into_errors_consumes_parser() {
-        let mut p: Parser<K> = parser("x;");
-        p.error("err1");
-        p.error("err2");
-        let errors: Vec<ParseError> = p.into_errors();
-        assert_eq!(errors.len(), 2);
     }
 
     // Source & Tokens

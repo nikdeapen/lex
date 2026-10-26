@@ -1,6 +1,6 @@
 use lex::lexer::matchers::{digits, ident, whitespace};
-use lex::lexer::{Lexer, Token};
-use lex::parser::Parser;
+use lex::lexer::{Lexer, Span, Token};
+use lex::parser::{ParseError, Parser};
 use lex::{lexer, line_comment, literal};
 
 lexer! {
@@ -18,6 +18,18 @@ lexer! {
 }
 
 #[derive(Debug, Eq, PartialEq)]
+enum Error {
+    Unexpected(ParseError<Kind>),
+    ExpectedMessageKeyword(Span),
+}
+
+impl From<ParseError<Kind>> for Error {
+    fn from(error: ParseError<Kind>) -> Self {
+        Self::Unexpected(error)
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
 struct Message {
     name: String,
     fields: Vec<Field>,
@@ -30,11 +42,10 @@ struct Field {
     number: String,
 }
 
-fn parse_message(p: &mut Parser<Kind>) -> Option<Message> {
+fn parse_message(p: &mut Parser<Kind>, errors: &mut Vec<Error>) -> Result<Message, Error> {
     let keyword: Token<Kind> = p.expect(Kind::Ident)?;
     if p.text(keyword.span()) != "message" {
-        p.error("expected 'message' keyword");
-        return None;
+        return Err(Error::ExpectedMessageKeyword(keyword.span()));
     }
 
     let name: Token<Kind> = p.expect(Kind::Ident)?;
@@ -45,8 +56,9 @@ fn parse_message(p: &mut Parser<Kind>) -> Option<Message> {
     let mut fields: Vec<Field> = Vec::default();
     while !p.check(Kind::RBrace) && !p.check(Kind::EndOfFile) {
         match parse_field(p) {
-            Some(field) => fields.push(field),
-            None => {
+            Ok(field) => fields.push(field),
+            Err(error) => {
+                errors.push(error);
                 p.skip_until(Kind::Semi);
                 p.advance(); // consume the ';'
             }
@@ -55,10 +67,10 @@ fn parse_message(p: &mut Parser<Kind>) -> Option<Message> {
 
     p.expect(Kind::RBrace)?;
 
-    Some(Message { name, fields })
+    Ok(Message { name, fields })
 }
 
-fn parse_field(p: &mut Parser<Kind>) -> Option<Field> {
+fn parse_field(p: &mut Parser<Kind>) -> Result<Field, Error> {
     let type_token: Token<Kind> = p.expect(Kind::Ident)?;
     let type_name: String = p.text(type_token.span()).to_string();
 
@@ -72,7 +84,7 @@ fn parse_field(p: &mut Parser<Kind>) -> Option<Field> {
 
     p.expect(Kind::Semi)?;
 
-    Some(Field {
+    Ok(Field {
         type_name,
         field_name,
         number,
@@ -86,12 +98,13 @@ fn fn_parse_message() {
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
-    let message: Option<Message> = parse_message(&mut parser);
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
 
-    assert!(parser.errors().is_empty(), "errors: {:?}", parser.errors());
+    assert!(errors.is_empty(), "errors: {:?}", errors);
     assert_eq!(
         message,
-        Some(Message {
+        Ok(Message {
             name: "Foo".to_string(),
             fields: vec![
                 Field {
@@ -116,12 +129,13 @@ fn fn_parse_message_empty() {
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
-    let message: Option<Message> = parse_message(&mut parser);
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
 
-    assert!(parser.errors().is_empty());
+    assert!(errors.is_empty());
     assert_eq!(
         message,
-        Some(Message {
+        Ok(Message {
             name: "Empty".to_string(),
             fields: vec![],
         })
@@ -135,11 +149,16 @@ fn fn_parse_message_missing_brace() {
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
-    let message: Option<Message> = parse_message(&mut parser);
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
 
-    assert!(message.is_none());
-    assert_eq!(parser.errors().len(), 1);
-    assert_eq!(parser.errors()[0].message(), "expected LBrace, found Ident");
+    let Err(Error::Unexpected(error)) = message else {
+        panic!("expected an unexpected token error: {:?}", message);
+    };
+    assert_eq!(error.expected(), Kind::LBrace);
+    assert_eq!(error.found().kind(), Kind::Ident);
+    assert_eq!(error.to_string(), "expected LBrace, found Ident");
+    assert!(errors.is_empty());
 }
 
 #[test]
@@ -149,14 +168,15 @@ fn fn_parse_message_recovery() {
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
-    let message: Option<Message> = parse_message(&mut parser);
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
 
     // First field fails (missing field name), recovery skips to ';'
     // Second field parses successfully
-    assert_eq!(parser.errors().len(), 1);
+    assert_eq!(errors.len(), 1);
     assert_eq!(
         message,
-        Some(Message {
+        Ok(Message {
             name: "Foo".to_string(),
             fields: vec![Field {
                 type_name: "int32".to_string(),
@@ -179,9 +199,10 @@ fn fn_parse_message_multiline() {
     let tokens: Vec<Token<Kind>> = lexer.lex(&source);
     let mut parser: Parser<Kind> = Parser::new(source, tokens).with_skip(Kind::Whitespace);
 
-    let message: Option<Message> = parse_message(&mut parser);
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<Message, Error> = parse_message(&mut parser, &mut errors);
 
-    assert!(parser.errors().is_empty(), "errors: {:?}", parser.errors());
+    assert!(errors.is_empty(), "errors: {:?}", errors);
     let message: Message = message.unwrap();
     assert_eq!(message.name, "Person");
     assert_eq!(message.fields.len(), 3);
@@ -205,7 +226,10 @@ struct CommentedField {
     number: String,
 }
 
-fn parse_commented_message(p: &mut Parser<Kind>) -> Option<CommentedMessage> {
+fn parse_commented_message(
+    p: &mut Parser<Kind>,
+    errors: &mut Vec<Error>,
+) -> Result<CommentedMessage, Error> {
     let comments: Vec<String> = p
         .leading_comments()
         .iter()
@@ -214,8 +238,7 @@ fn parse_commented_message(p: &mut Parser<Kind>) -> Option<CommentedMessage> {
 
     let keyword: Token<Kind> = p.expect(Kind::Ident)?;
     if p.text(keyword.span()) != "message" {
-        p.error("expected 'message' keyword");
-        return None;
+        return Err(Error::ExpectedMessageKeyword(keyword.span()));
     }
 
     let name: Token<Kind> = p.expect(Kind::Ident)?;
@@ -226,8 +249,9 @@ fn parse_commented_message(p: &mut Parser<Kind>) -> Option<CommentedMessage> {
     let mut fields: Vec<CommentedField> = Vec::default();
     while !p.check(Kind::RBrace) && !p.check(Kind::EndOfFile) {
         match parse_commented_field(p) {
-            Some(field) => fields.push(field),
-            None => {
+            Ok(field) => fields.push(field),
+            Err(error) => {
+                errors.push(error);
                 p.skip_until(Kind::Semi);
                 p.advance();
             }
@@ -236,14 +260,14 @@ fn parse_commented_message(p: &mut Parser<Kind>) -> Option<CommentedMessage> {
 
     p.expect(Kind::RBrace)?;
 
-    Some(CommentedMessage {
+    Ok(CommentedMessage {
         comments,
         name,
         fields,
     })
 }
 
-fn parse_commented_field(p: &mut Parser<Kind>) -> Option<CommentedField> {
+fn parse_commented_field(p: &mut Parser<Kind>) -> Result<CommentedField, Error> {
     let comments: Vec<String> = p
         .leading_comments()
         .iter()
@@ -263,7 +287,7 @@ fn parse_commented_field(p: &mut Parser<Kind>) -> Option<CommentedField> {
 
     p.expect(Kind::Semi)?;
 
-    Some(CommentedField {
+    Ok(CommentedField {
         comments,
         type_name,
         field_name,
@@ -289,9 +313,11 @@ message Person {
         .with_skip(Kind::LineComment)
         .with_line_comment(Kind::LineComment, "//");
 
-    let message: Option<CommentedMessage> = parse_commented_message(&mut parser);
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<CommentedMessage, Error> =
+        parse_commented_message(&mut parser, &mut errors);
 
-    assert!(parser.errors().is_empty(), "errors: {:?}", parser.errors());
+    assert!(errors.is_empty(), "errors: {:?}", errors);
     let message: CommentedMessage = message.unwrap();
 
     assert_eq!(
@@ -318,9 +344,11 @@ fn fn_parse_message_no_comments() {
         .with_skip(Kind::LineComment)
         .with_line_comment(Kind::LineComment, "//");
 
-    let message: Option<CommentedMessage> = parse_commented_message(&mut parser);
+    let mut errors: Vec<Error> = Vec::default();
+    let message: Result<CommentedMessage, Error> =
+        parse_commented_message(&mut parser, &mut errors);
 
-    assert!(parser.errors().is_empty(), "errors: {:?}", parser.errors());
+    assert!(errors.is_empty(), "errors: {:?}", errors);
     let message: CommentedMessage = message.unwrap();
     assert!(message.comments.is_empty());
     assert!(message.fields[0].comments.is_empty());
