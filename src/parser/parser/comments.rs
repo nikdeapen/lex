@@ -7,7 +7,8 @@ impl<K: Copy + PartialEq> Parser<'_, K> {
 
     /// Configures line comment extraction.
     ///
-    /// The `kind` and `delimiter` should match the [line_comment!] matcher used in the lexer.
+    /// The `kind` and `delimiter` should match the [line_comment!](crate::line_comment) matcher
+    /// used in the lexer.
     #[must_use]
     pub fn with_line_comment(mut self, kind: K, delimiter: &str) -> Self {
         debug_assert!(!delimiter.is_empty());
