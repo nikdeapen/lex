@@ -21,8 +21,9 @@ impl<K: Copy + PartialEq> Parser<K> {
 
     /// Gets the leading comment spans before the current position.
     ///
-    /// Each span covers the text after the delimiter and before the line ending. Walks backward
-    /// through the token stream, skipping whitespace, collecting consecutive comment tokens.
+    /// Each span covers the text after the delimiter and before the line ending. Only the line
+    /// comments directly above the current token are included: each comment starts its own line
+    /// and no blank line separates it from the line below.
     pub fn leading_comments(&self) -> Vec<Span> {
         let config: CommentConfig<K> = match self.comment {
             Some(c) => c,
@@ -30,6 +31,7 @@ impl<K: Copy + PartialEq> Parser<K> {
         };
 
         let mut comments: Vec<Span> = Vec::default();
+        let mut below: u32 = self.tokens[self.pos].span().offset();
         let mut i: usize = self.pos;
 
         while i > 0 {
@@ -38,7 +40,7 @@ impl<K: Copy + PartialEq> Parser<K> {
             if self.skip.contains(&token.kind()) && token.kind() != config.kind {
                 continue;
             }
-            if token.kind() != config.kind {
+            if token.kind() != config.kind || !self.is_directly_above(token.span(), below) {
                 break;
             }
 
@@ -52,10 +54,21 @@ impl<K: Copy + PartialEq> Parser<K> {
             }
 
             comments.push(Span::new(offset, len));
+            below = token.span().offset();
         }
 
         comments.reverse();
         comments
+    }
+
+    /// Checks if the `comment` starts its own line & is on the line directly above the `below`
+    /// offset.
+    fn is_directly_above(&self, comment: Span, below: u32) -> bool {
+        let start: usize = comment.offset() as usize;
+        let line_start: usize = self.source[..start].rfind('\n').map_or(0, |i| i + 1);
+        let starts_line: bool = self.source[line_start..start].trim().is_empty();
+        let newlines: usize = self.source[start..below as usize].matches('\n').count();
+        starts_line && newlines == 1
     }
 }
 
@@ -116,5 +129,45 @@ mod tests {
         let p: Parser<CK> = comment_parser("// hello  \nx");
         let comments: Vec<Span> = p.leading_comments();
         assert_eq!(comments[0].text(p.source()), " hello");
+    }
+
+    #[test]
+    fn leading_comments_indented() {
+        let p: Parser<CK> = comment_parser("    // first\n    // second\n    x");
+        let comments: Vec<Span> = p.leading_comments();
+        assert_eq!(comments.len(), 2);
+        assert_eq!(comments[0].text(p.source()), " first");
+        assert_eq!(comments[1].text(p.source()), " second");
+    }
+
+    #[test]
+    fn leading_comments_crlf() {
+        let p: Parser<CK> = comment_parser("// first\r\n// second\r\nx");
+        let comments: Vec<Span> = p.leading_comments();
+        assert_eq!(comments.len(), 2);
+        assert_eq!(comments[0].text(p.source()), " first");
+        assert_eq!(comments[1].text(p.source()), " second");
+    }
+
+    #[test]
+    fn leading_comments_skips_trailing_comment() {
+        let mut p: Parser<CK> = comment_parser("x; // trailing\ny");
+        p.advance();
+        p.advance();
+        assert!(p.leading_comments().is_empty());
+    }
+
+    #[test]
+    fn leading_comments_stops_at_blank_line() {
+        let p: Parser<CK> = comment_parser("// far\n\nx");
+        assert!(p.leading_comments().is_empty());
+    }
+
+    #[test]
+    fn leading_comments_stops_at_blank_line_between_comments() {
+        let p: Parser<CK> = comment_parser("// first\n\n// second\nx");
+        let comments: Vec<Span> = p.leading_comments();
+        assert_eq!(comments.len(), 1);
+        assert_eq!(comments[0].text(p.source()), " second");
     }
 }
