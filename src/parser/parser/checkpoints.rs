@@ -1,7 +1,7 @@
 use super::Parser;
 use crate::parser::checkpoint::Checkpoint;
 
-impl<K: Copy + PartialEq> Parser<K> {
+impl<K: Copy + PartialEq> Parser<'_, K> {
     //! Checkpoints
 
     /// Creates a checkpoint at the current position.

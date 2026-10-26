@@ -7,19 +7,19 @@ mod consuming;
 mod skip;
 
 /// A parser.
-pub struct Parser<K> {
-    pub(in crate::parser::parser) source: String,
+pub struct Parser<'a, K> {
+    pub(in crate::parser::parser) source: &'a str,
     pub(in crate::parser::parser) tokens: Vec<Token<K>>,
     pub(in crate::parser::parser) pos: usize,
     pub(in crate::parser::parser) skip: Vec<K>,
     pub(in crate::parser::parser) comment: Option<CommentConfig<K>>,
 }
 
-impl<K: Copy + PartialEq + TokenKind> Parser<K> {
+impl<'a, K: Copy + PartialEq + TokenKind> Parser<'a, K> {
     //! Construction
 
     /// Creates a new parser.
-    pub fn new(source: String, tokens: Vec<Token<K>>) -> Self {
+    pub fn new(source: &'a str, tokens: Vec<Token<K>>) -> Self {
         debug_assert!(!tokens.is_empty() && tokens.last().unwrap().kind() == K::end_of_file());
 
         Self {
@@ -32,7 +32,7 @@ impl<K: Copy + PartialEq + TokenKind> Parser<K> {
     }
 }
 
-impl<K: Copy + PartialEq> Parser<K> {
+impl<K: Copy + PartialEq> Parser<'_, K> {
     //! Position
 
     /// Gets the current position in the token stream.
@@ -69,21 +69,21 @@ impl<K: Copy + PartialEq> Parser<K> {
     }
 }
 
-impl<K> Parser<K> {
+impl<'a, K> Parser<'a, K> {
     //! Source
 
     /// Gets the source text.
-    pub fn source(&self) -> &str {
-        &self.source
+    pub fn source(&self) -> &'a str {
+        self.source
     }
 
     /// Gets the text for a `span`.
-    pub fn text(&self, span: Span) -> &str {
-        span.text(&self.source)
+    pub fn text(&self, span: Span) -> &'a str {
+        span.text(self.source)
     }
 }
 
-impl<K> Parser<K> {
+impl<K> Parser<'_, K> {
     //! Tokens
 
     /// Gets the token stream.
@@ -109,9 +109,8 @@ mod tests {
         }
     }
 
-    pub(in crate::parser::parser) fn parser(source: &str) -> Parser<K> {
-        let source: String = source.to_string();
-        let tokens: Vec<Token<K>> = K::lexer().lex(&source);
+    pub(in crate::parser::parser) fn parser(source: &str) -> Parser<'_, K> {
+        let tokens: Vec<Token<K>> = K::lexer().lex(source);
         Parser::new(source, tokens).with_skip(K::Whitespace)
     }
 
@@ -162,6 +161,14 @@ mod tests {
         let p: Parser<K> = parser("x = y");
         let span: Span = p.peek().span();
         assert_eq!(p.text(span), "x");
+    }
+
+    #[test]
+    fn text_outlives_parser_borrow() {
+        let mut p: Parser<K> = parser("x = y");
+        let text: &str = p.text(p.peek().span());
+        p.advance();
+        assert_eq!(text, "x");
     }
 
     #[test]

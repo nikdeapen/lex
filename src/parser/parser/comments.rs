@@ -2,7 +2,7 @@ use super::Parser;
 use crate::lexer::{Span, Token};
 use crate::parser::comment_config::CommentConfig;
 
-impl<K: Copy + PartialEq> Parser<K> {
+impl<K: Copy + PartialEq> Parser<'_, K> {
     //! Comments
 
     /// Configures line comment extraction.
@@ -90,9 +90,8 @@ mod tests {
         }
     }
 
-    fn comment_parser(source: &str) -> Parser<CK> {
-        let source: String = source.to_string();
-        let tokens: Vec<Token<CK>> = CK::lexer().lex(&source);
+    fn comment_parser(source: &str) -> Parser<'_, CK> {
+        let tokens: Vec<Token<CK>> = CK::lexer().lex(source);
         Parser::new(source, tokens)
             .with_skip(CK::Whitespace)
             .with_skip(CK::LineComment)
@@ -101,8 +100,8 @@ mod tests {
 
     #[test]
     fn leading_comments_without_config() {
-        let source: String = "// comment\nx".to_string();
-        let tokens: Vec<Token<CK>> = CK::lexer().lex(&source);
+        let source: &str = "// comment\nx";
+        let tokens: Vec<Token<CK>> = CK::lexer().lex(source);
         let p: Parser<CK> = Parser::new(source, tokens).with_skip(CK::Whitespace);
         assert!(p.leading_comments().is_empty());
     }
